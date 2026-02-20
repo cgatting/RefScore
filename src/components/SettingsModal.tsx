@@ -14,6 +14,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, c
   const [deepSearchEnabled, setDeepSearchEnabled] = useState(!!config.deepSearchEnabled);
   const [total, setTotal] = useState(0);
 
+  const PRESETS: Record<string, ScoringConfig['weights']> = {
+    Balanced: ScoringEngine.DEFAULT_CONFIG.weights,
+    Alignment: { Alignment: 0.45, Numbers: 0.1, Entities: 0.15, Methods: 0.1, Recency: 0.1, Authority: 0.1 },
+    Recency: { Alignment: 0.3, Numbers: 0.1, Entities: 0.1, Methods: 0.1, Recency: 0.25, Authority: 0.15 },
+    Authority: { Alignment: 0.3, Numbers: 0.1, Entities: 0.1, Methods: 0.1, Recency: 0.15, Authority: 0.25 },
+    MethodsNumbers: { Alignment: 0.25, Numbers: 0.2, Entities: 0.1, Methods: 0.25, Recency: 0.1, Authority: 0.1 }
+  };
+
   useEffect(() => {
     setWeights(config.weights);
     setDeepSearchEnabled(!!config.deepSearchEnabled);
@@ -71,6 +79,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, c
                  Adjust the importance of each analysis dimension. The weights should ideally sum to 1.0 (100%) for accurate scoring.
                </p>
              </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-slate-300">Presets</span>
+              <label className="flex items-center gap-2 text-xs text-slate-400">
+                <input
+                  type="checkbox"
+                  checked={deepSearchEnabled}
+                  onChange={(e) => setDeepSearchEnabled(e.target.checked)}
+                  className="accent-brand-500"
+                />
+                Enable DeepSearch
+              </label>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {Object.entries(PRESETS).map(([name, w]) => (
+                <button
+                  key={name}
+                  onClick={() => setWeights(w)}
+                  className="px-3 py-2 rounded-lg text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700"
+                >
+                  {name === 'MethodsNumbers' ? 'Methods & Numbers' : name}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-5">

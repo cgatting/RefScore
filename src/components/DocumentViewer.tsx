@@ -717,7 +717,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ result, onReset,
                                 ].join(' ')}
                               >
                                 <span className="opacity-50 text-[10px] mr-1 font-normal uppercase tracking-wider">REF</span>
-                                {key}
+                                {result.references[key] && result.references[key].authors && result.references[key].authors[0]
+                                  ? `${(result.references[key].authors[0].split(' ').pop() || 'Unknown')}${result.references[key].year && result.references[key].year > 0 ? ' ' + result.references[key].year : ''}`
+                                  : key}
                               </button>
                             );
                           })}

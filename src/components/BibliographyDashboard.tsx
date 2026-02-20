@@ -41,8 +41,8 @@ export const BibliographyDashboard: React.FC<BibliographyDashboardProps> = ({
   }, [manuscriptText, latexParser]);
 
   // 2. Filter references: Must be cited AND have Score > 0
-  const validReferences = useMemo(() => {
-    return Object.values(result.references)
+  const validReferences = useMemo<ProcessedReference[]>(() => {
+    return (Object.values(result.references) as ProcessedReference[])
       .filter(ref => {
         const score = ref.scores ? computeScore(ref.scores) : 0;
         const isCited = citedKeys.has(ref.id);
@@ -75,12 +75,12 @@ export const BibliographyDashboard: React.FC<BibliographyDashboardProps> = ({
   const handleDownloadTex = () => {
     // Identify references that should be removed (Score === 0)
     // We only care about removing citations for references that exist but have 0 score.
-    const lowScoreKeys = Object.values(result.references)
-        .filter(ref => {
+    const lowScoreKeys = (Object.values(result.references) as ProcessedReference[])
+        .filter((ref: ProcessedReference) => {
              const score = ref.scores ? computeScore(ref.scores) : 0;
              return score === 0;
         })
-        .map(ref => ref.id);
+        .map((ref: ProcessedReference) => ref.id);
 
     const cleanTex = latexParser.removeCitations(manuscriptText, lowScoreKeys);
     downloadTextFile('manuscript.tex', cleanTex, 'text/x-tex');
@@ -215,7 +215,7 @@ export const BibliographyDashboard: React.FC<BibliographyDashboardProps> = ({
                                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700 font-mono">
                                                 @{ref.id}
                                             </span>
-                                            <span className="text-xs font-medium text-slate-500">{ref.year}</span>
+                                            <span className="text-xs font-medium text-slate-500">{ref.year && ref.year > 0 ? ref.year : '—'}</span>
                                         </div>
                                         <h4 className="font-bold text-slate-200 text-lg leading-snug group-hover:text-brand-300 transition-colors">
                                             {ref.title}
