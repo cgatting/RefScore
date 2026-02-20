@@ -25,6 +25,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ result, onReset,
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'success'>('idle');
   const [isFixModeOpen, setIsFixModeOpen] = useState(false);
+  const [finderLog, setFinderLog] = useState<string[]>([]);
   // Research Gaps UX state
   const [gapFilter, setGapFilter] = useState<string>('');
   const [gapLoading, setGapLoading] = useState<Record<number, boolean>>({});
@@ -167,11 +168,15 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ result, onReset,
                   setBetterSources([]);
                   setSearchPerformed(false);
                   setUpdateStatus('idle');
+                  setFinderLog([]);
 
                   const currentRef = result.references[activeAnalysis.refId];
                   const contextSentence = result.analyzedSentences[activeAnalysis.sentenceIdx]?.text || '';
+                  const baselineTotal = computeScore(activeAnalysis.scores);
 
-                  const better = await finderService.findBetterSources(currentRef, contextSentence);
+                  const better = await finderService.findBetterSources(currentRef, contextSentence, baselineTotal, (msg) => {
+                    setFinderLog(prev => [...prev, msg]);
+                  });
                   setBetterSources(better);
                   setSearchPerformed(true);
                   setFindingSource(false);
@@ -191,6 +196,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ result, onReset,
                   </>
                 )}
               </button>
+              
+              {(findingSource || searchPerformed) && finderLog.length > 0 && (
+                <div className="mt-3 p-3 bg-slate-800/50 border border-slate-700 rounded-xl animate-fade-in">
+                  <div className="text-[10px] font-bold text-brand-400 uppercase tracking-wider mb-2">Search Progress</div>
+                  <div className="space-y-1">
+                    {finderLog.slice(-8).map((m, i) => (
+                      <div key={i} className="text-xs text-slate-300 font-mono">{m}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {searchPerformed && betterSources.length === 0 && (
                 <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-xl animate-scale-in">
@@ -210,6 +226,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ result, onReset,
                   </div>
                   {betterSources.map((source, idx) => {
                     const score = source.scores ? computeScore(source.scores) : 0;
+                    const baseline = computeScore(activeAnalysis.scores);
+                    const delta = (score - baseline);
                     return (
                       <div key={source.id || idx} className="p-4 bg-brand-500/10 border border-brand-500/20 rounded-xl">
                         <div className="flex justify-between items-start mb-3">
@@ -227,6 +245,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ result, onReset,
                               }`}
                             >
                               {score.toFixed(0)}/100 Match
+                            </span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${delta > 0 ? 'text-green-300 bg-green-500/20 border-green-500/20' : 'text-slate-400 bg-slate-700/30 border-slate-700/50'}`}>
+                              {delta > 0 ? `+${delta.toFixed(1)} vs current` : 'No improvement'}
                             </span>
                           </div>
                         </div>
