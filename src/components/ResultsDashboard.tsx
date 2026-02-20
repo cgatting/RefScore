@@ -296,7 +296,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onRe
                         <div className="text-xs text-slate-500 line-clamp-1">{ref.authors.join(', ')}</div>
                       </td>
                       <td className="px-6 py-4 text-slate-500 font-mono text-xs font-medium">
-                        {ref.year}
+                        {ref.year && ref.year > 0 ? ref.year : '—'}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className={`inline-flex items-center justify-center font-bold text-sm ${

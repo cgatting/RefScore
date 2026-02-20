@@ -68,7 +68,8 @@ export class AnalysisService {
           if ((!ref.authors || ref.authors.length === 0) && (oaPaper as any).authorships) {
             ref.authors = (oaPaper as any).authorships.map((a: any) => a.author.display_name).filter(Boolean);
           }
-          if (!ref.year && oaPaper.publication_year) {
+          const currentYear = new Date().getFullYear();
+          if ((typeof ref.year !== 'number' || ref.year <= 0 || ref.year > currentYear) && oaPaper.publication_year) {
             ref.year = oaPaper.publication_year;
           }
         } else {
@@ -86,7 +87,8 @@ export class AnalysisService {
               if ((!ref.venue || ref.venue === 'Unknown') && Array.isArray(msg['container-title']) && msg['container-title'][0]) {
                 ref.venue = msg['container-title'][0];
               }
-              if (!ref.year) {
+              const currentYear = new Date().getFullYear();
+              if (typeof ref.year !== 'number' || ref.year <= 0 || ref.year > currentYear) {
                 const parts =
                   msg['published-print']?.['date-parts']?.[0] ||
                   msg['published-online']?.['date-parts']?.[0] ||

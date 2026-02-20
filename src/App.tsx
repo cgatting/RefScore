@@ -10,6 +10,10 @@ import { AnalysisService } from './services/AnalysisService';
 import { DeepSearchClient } from './services/DeepSearchClient';
 import { ScoringConfig, ScoringEngine } from './services/scoring/ScoringEngine';
 import { AppState, AnalysisResult } from './types';
+import { BibTexParser } from './services/parsers/BibTexParser';
+import { OpenAlexService } from './services/OpenAlexService';
+import { upsertAndSortBibTexEntries, splitBibTexFile } from './services/parsers/BibTexFileEditor';
+import { CitationFinderService } from './services/CitationFinderService';
 
 function App() {
   const logoUrl = new URL('../logo.png', import.meta.url).href;
@@ -40,6 +44,37 @@ function App() {
     setScoringConfig(prev => ({ ...prev, deepSearchEnabled: autoGenerateBib }));
   }, [autoGenerateBib]);
 
+  const sanitizeGeneratedBibliography = async (bibText: string, manuscript: string): Promise<{ bib: string; manuscript: string }> => {
+    const parser = new BibTexParser();
+    const res = parser.parse(bibText);
+    if (!('ok' in res) || !res.ok) return { bib: bibText, manuscript };
+    const refs = res.value;
+    const unknownRefs = refs.filter(r => /unknown/i.test(r.id));
+    if (unknownRefs.length === 0) return { bib: bibText, manuscript };
+    const oa = new OpenAlexService();
+    const finder = new CitationFinderService(scoringConfig);
+    let updatedManuscript = manuscript;
+    const replacements: { oldKey: string; newBlock: string; newRefId: string }[] = [];
+    for (const u of unknownRefs) {
+      const title = u.title || '';
+      if (!title) continue;
+      const candidates = await oa.searchPapers(title, 5);
+      if (candidates.length === 0) continue;
+      const best = candidates[0];
+      const block = finder.generateBibTeX(best);
+      replacements.push({ oldKey: u.id, newBlock: block, newRefId: best.id });
+      // Update manuscript citations to use the new reference key
+      const update = finder.updateFiles(u.id, best, updatedManuscript, bibText);
+      updatedManuscript = update.manuscript;
+    }
+    if (replacements.length === 0) return { bib: bibText, manuscript };
+    const split = splitBibTexFile(bibText);
+    const keptEntries = split.entries.filter(e => !replacements.some(r => r.oldKey === e.key));
+    let base = split.prefix + keptEntries.map(e => e.raw).join('') + split.suffix;
+    const blocks = replacements.map(r => r.newBlock);
+    return { bib: upsertAndSortBibTexEntries(base, blocks), manuscript: updatedManuscript };
+  };
+
   const handleAnalysis = async (configOverride?: ScoringConfig) => {
     const deepSearchFlag = !!autoGenerateBib;
 
@@ -69,6 +104,10 @@ function App() {
                 nextBibliography = (refined.bibtex && refined.bibtex.trim().length > 0)
                   ? refined.bibtex
                   : (refined.bibliographyText || nextBibliography);
+                setStatusMessage("Cleaning generated bibliography...");
+                const cleaned = await sanitizeGeneratedBibliography(nextBibliography, nextManuscript);
+                nextManuscript = cleaned.manuscript;
+                nextBibliography = cleaned.bib;
                 setManuscriptText(nextManuscript);
                 setBibliographyText(nextBibliography);
                 setDeepSearchProgress(0); // Reset for next phase
@@ -270,11 +309,11 @@ function App() {
                           <input
                             type="number"
                             min={1}
-                            max={100}
+                            max={500}
                             value={deepSearchMaxResults}
                             onChange={(e) => {
                               const v = parseInt(e.target.value || '1', 10);
-                              const clamped = isNaN(v) ? 1 : Math.max(1, Math.min(100, v));
+                              const clamped = isNaN(v) ? 1 : Math.max(1, Math.min(500, v));
                               setDeepSearchMaxResults(clamped);
                             }}
                             className="w-24 px-3 py-2 text-sm bg-slate-800 border border-slate-700 rounded-lg text-slate-200"
@@ -360,9 +399,11 @@ function App() {
                  ></div>
               </div>
               <p className="text-slate-500 text-sm text-center animate-pulse">{statusMessage}</p>
+              <p className="text-xs text-slate-600 text-center mt-1">This might take a minute…</p>
             </div>
           </div>
         )}
+
 
         {appState === AppState.RESULTS && result && (
            <div className="animate-fade-in w-full">

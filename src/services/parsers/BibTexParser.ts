@@ -74,9 +74,9 @@ export class BibTexParser {
   }
 
   private parseYear(yearStr: string): number {
-    if (!yearStr) return new Date().getFullYear();
+    if (!yearStr) return 0;
     const match = yearStr.match(/\d{4}/);
-    return match ? parseInt(match[0], 10) : new Date().getFullYear();
+    return match ? parseInt(match[0], 10) : 0;
   }
 
   private parseSimpleLines(content: string): Result<ProcessedReference[], ParsingError> {
@@ -86,7 +86,7 @@ export class BibTexParser {
     lines.forEach((line, index) => {
       // Heuristic: [1] Author (Year). Title.
       const yearMatch = line.match(/\((\d{4})\)/) || line.match(/\b(19|20)\d{2}\b/);
-      const year = yearMatch ? parseInt(yearMatch[1] || yearMatch[0], 10) : new Date().getFullYear();
+      const year = yearMatch ? parseInt((yearMatch as RegExpMatchArray)[1] || (yearMatch as RegExpMatchArray)[0], 10) : 0;
       const id = `ref_${index + 1}`;
       
       references.push({
