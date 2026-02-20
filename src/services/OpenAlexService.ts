@@ -55,30 +55,30 @@ export class OpenAlexService {
    * @param query The search query (title, keywords, etc.)
    * @param limit Number of results to return (default 3)
    */
-  public async searchPapers(query: string, limit: number = 3): Promise<ProcessedReference[]> {
+  public async searchPapers(query: string, limit: number = 3, progress?: (msg: string) => void): Promise<ProcessedReference[]> {
     try {
-      // Use 'search' parameter for full-text search on works
-      const url = `${OpenAlexService.BASE_URL}/works?search=${encodeURIComponent(query)}&per_page=${limit}`;
-      
-      console.log(`Querying OpenAlex: ${url}`);
-      
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`OpenAlex API Error: ${response.status} ${response.statusText}`);
+      const collected: OpenAlexWork[] = [];
+      const perPage = Math.min(200, Math.max(1, limit));
+      let page = 1;
+      while (collected.length < limit) {
+        const remaining = limit - collected.length;
+        const per = Math.min(perPage, remaining);
+        progress?.(`OpenAlex: fetching page ${page} (${per} per page)`);
+        const url = `${OpenAlexService.BASE_URL}/works?search=${encodeURIComponent(query)}&per_page=${per}&page=${page}`;
+        const response = await fetch(url);
+        if (!response.ok) break;
+        const data: OpenAlexListResponse = await response.json();
+        if (!data.results || data.results.length === 0) break;
+        collected.push(...data.results);
+        progress?.(`OpenAlex: received ${data.results.length} results (total ${collected.length})`);
+        if (data.results.length < per) break;
+        page += 1;
       }
-
-      const data: OpenAlexListResponse = await response.json();
-      
-      if (!data.results || data.results.length === 0) {
-        return [];
-      }
-
-      return data.results.map(work => {
+      if (collected.length === 0) return [];
+      return collected.slice(0, limit).map(work => {
         const paper = this.convertToPaper(work);
         return this.mapOpenAlexPaperToReference(paper);
       });
-
     } catch (error) {
       console.error("OpenAlex Search Failed:", error);
       return [];

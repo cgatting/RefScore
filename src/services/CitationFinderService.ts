@@ -20,42 +20,79 @@ export class CitationFinderService {
    * @param currentRef The reference currently being used
    * @param contextSentence The sentence where it is cited
    */
-  public async findBetterSources(currentRef: ProcessedReference, contextSentence: string): Promise<ProcessedReference[]> {
-    
-    // 1. Extract keywords from the sentence context
-    let keywords = contextSentence
+  public async findBetterSources(currentRef: ProcessedReference, contextSentence: string, baselineTotal?: number, progress?: (msg: string) => void): Promise<ProcessedReference[]> {
+    const isGenericTitle = (t: string) =>
+      /(^|\b)(contents|index|author index|editorial|preface|foreword|issue|volume)\b/i.test(t);
+      
+    progress?.('Extracting context and entities');
+    const tokens = contextSentence
       .split(/\W+/)
       .filter(w => w.length > 4 && !['reference', 'citation', 'however', 'because', 'although', 'study', 'work', 'paper'].includes(w.toLowerCase()))
-      .slice(0, 5)
+      .slice(0, 6)
       .join(' ');
+    const entities = this.entityExtractor.extract(contextSentence);
+    const titleTopic = (currentRef.title || '').split(':')[0];
+    
+    const queries = Array.from(new Set([
+      tokens,
+      entities.join(' '),
+      isGenericTitle(titleTopic) ? '' : titleTopic
+    ].filter(q => q && q.trim().length > 3)));
 
-    // 2. If weak, fallback to title or entities
-    if (!keywords || keywords.length < 5) {
-        const entities = this.entityExtractor.extract(contextSentence);
-        if (entities.length > 0) {
-            keywords = entities.join(' ');
-        } else {
-            // Use title topic
-            keywords = currentRef.title.split(':')[0];
-        }
+    progress?.(`Running ${queries.length} OpenAlex queries`);
+    const perQueryLimit = Math.max(1, Math.floor(1000 / Math.max(1, queries.length)));
+    const collected: ProcessedReference[] = [];
+    for (const q of queries) {
+      progress?.(`Query: "${q}" (${perQueryLimit} results target)`);
+      const res = await this.oaService.searchPapers(q, perQueryLimit, progress);
+      collected.push(...res);
     }
 
-    const topic = keywords;
-    
-    console.log(`Querying OpenAlex for topic: "${topic}"`);
+    progress?.('Filtering and deduplicating candidates');
+    const seen = new Set<string>();
+    const uniqueCandidates = collected.filter(c => {
+      const key = (c.doi ? c.doi.toLowerCase() : '') + '|' + (c.title ? c.title.toLowerCase() : '');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).filter(c => (c.abstract && c.abstract.length >= 80) && (!c.title || !isGenericTitle(c.title) ? true : false));
 
-    // Fetch 200 candidates to score and filter
-    const candidates = await this.oaService.searchPapers(topic, 200);
+    if (uniqueCandidates.length === 0) {
+      progress?.('No viable candidates found');
+      return [];
+    }
 
-    if (candidates.length === 0) return [];
-
-    return this.scoreAndRankCandidates(candidates, contextSentence);
+    progress?.(`Scoring ${uniqueCandidates.length} candidates`);
+    const ranked = this.scoreAndRankCandidates(uniqueCandidates, contextSentence);
+    if (typeof baselineTotal === 'number') {
+      const better = ranked.filter(r => {
+        const total = r.scores ? this.scoringEngine.computeWeightedTotal(r.scores) : 0;
+        return total > baselineTotal + 0.5; // require a meaningful improvement
+      });
+      if (better.length > 0) {
+        progress?.(`Found ${better.length} better sources`);
+        return better;
+      }
+      progress?.('No better sources found, expanding search');
+      const gap = await this.findSourcesForGap(contextSentence, progress);
+      const gapBetter = gap.filter(r => {
+        const total = r.scores ? this.scoringEngine.computeWeightedTotal(r.scores) : 0;
+        return total > baselineTotal + 0.5;
+      });
+      if (gapBetter.length > 0) {
+        progress?.(`Found ${gapBetter.length} better sources with expanded search`);
+        return gapBetter;
+      }
+      progress?.('Expanded search found no improvements');
+      return [];
+    }
+    return ranked;
   }
 
   /**
    * Finds papers to fill a detected research gap or missing citation.
    */
-  public async findSourcesForGap(contextSentence: string): Promise<ProcessedReference[]> {
+  public async findSourcesForGap(contextSentence: string, progress?: (msg: string) => void): Promise<ProcessedReference[]> {
     // 1. Extract potential search terms
     let keywords = contextSentence
       .split(/\W+/)
@@ -81,9 +118,9 @@ export class CitationFinderService {
         return [];
     }
 
-    console.log(`Searching OpenAlex for gap filling: "${keywords}"`);
+    progress?.('Searching for gap-filling sources');
     
-    const candidates = await this.oaService.searchPapers(keywords, 500);
+    const candidates = await this.oaService.searchPapers(keywords, 1000, progress);
     
     if (candidates.length === 0) return [];
 
