@@ -28,8 +28,9 @@ export class GuidedFixService {
           type: 'missing_citation',
           severity: 'high',
           description: `Sentence contains a claim ("${sentence.triggerPhrase || 'suggests'}") but lacks a citation.`,
-          suggestion: 'Add a citation to support this claim.',
-          autoFixAvailable: false, // User needs to select a source
+          suggestion: 'Add a citation placeholder to support this claim.',
+          autoFixAvailable: true, 
+          apply: (text) => `${text} [CITATION NEEDED]`,
         });
       }
 
@@ -43,8 +44,9 @@ export class GuidedFixService {
               type: 'low_relevance',
               severity: 'medium',
               description: `Citation [${citKey}] has low relevance alignment (${Math.round(scores.Alignment * 100)}%).`,
-              suggestion: 'Consider replacing with a more relevant source.',
-              autoFixAvailable: false,
+              suggestion: 'Mark for review with a placeholder.',
+              autoFixAvailable: true,
+              apply: (text) => `${text} [RELEVANCE CHECK: ${citKey}]`,
             });
           }
           if (scores.Recency < 0.2) {
@@ -54,14 +56,29 @@ export class GuidedFixService {
               type: 'outdated',
               severity: 'low',
               description: `Citation [${citKey}] is significantly older than the field average.`,
-              suggestion: 'Check for newer literature.',
-              autoFixAvailable: false,
+              suggestion: 'Mark for update with a placeholder.',
+              autoFixAvailable: true,
+              apply: (text) => `${text} [UPDATE NEEDED: ${citKey}]`,
             }); 
           }
         });
       }
 
-      // 3. Check for Formatting (Heuristic)
+      // 4. Check for Identified Gaps
+      if (sentence.gapIdentified) {
+        actions.push({
+          id: `fix-gap-${index}`,
+          sentenceIndex: index,
+          type: 'gap',
+          severity: 'medium',
+          description: 'This sentence identifies a potential research gap.',
+          suggestion: 'Highlight this gap for further exploration.',
+          autoFixAvailable: true,
+          apply: (text) => `${text} [RESEARCH GAP]`,
+        });
+      }
+
+      // 5. Check for Formatting (Heuristic)
       // Example: "et al" without dot, or multiple spaces
       if (sentence.text.includes('et al ') && !sentence.text.includes('et al.')) {
         actions.push({

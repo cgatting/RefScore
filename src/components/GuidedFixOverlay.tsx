@@ -20,8 +20,16 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
   onUpdateManuscript
 }) => {
   const [currentFixIndex, setCurrentFixIndex] = useState(0);
-  const [history, setHistory] = useState<string[]>([]);
+  const [history, setHistory] = useState<{text: string, description: string}[]>([]);
   const [currentText, setCurrentText] = useState(manuscriptText);
+  const [notification, setNotification] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
   
   // Re-generate plan when result changes (or initial load)
   const fixPlan = useMemo(() => {
@@ -80,7 +88,7 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
 
   const handleApply = () => {
     // 1. Save history
-    setHistory(prev => [...prev, currentText]);
+    setHistory(prev => [...prev, { text: currentText, description: `Fixed: ${currentAction.type}` }]);
 
     // 2. Apply Fix
     let newText = currentText;
@@ -110,9 +118,71 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
     // 3. Update state
     setCurrentText(newText);
     onUpdateManuscript(newText);
+    setNotification("Fix applied successfully");
     
     // 4. Move to next
     setCurrentFixIndex(prev => prev + 1);
+  };
+
+  const handleApplyAll = () => {
+    // 1. Save history
+    setHistory(prev => [...prev, { text: currentText, description: "Batch applied all remaining fixes" }]);
+
+    let newText = currentText;
+    let appliedCount = 0;
+
+    // 2. Get all remaining auto-fixable actions
+    const remainingActions = fixPlan.slice(currentFixIndex).filter(a => a.autoFixAvailable && a.apply);
+    
+    // Group by sentence index to handle multiple fixes per sentence
+    const actionsBySentence = new Map<number, FixAction[]>();
+    remainingActions.forEach(action => {
+        const list = actionsBySentence.get(action.sentenceIndex) || [];
+        list.push(action);
+        actionsBySentence.set(action.sentenceIndex, list);
+    });
+
+    // Process each sentence
+    actionsBySentence.forEach((actions, sentenceIndex) => {
+        const originalSentence = result.analyzedSentences[sentenceIndex].text;
+        
+        // If the original sentence is found in the text
+        if (newText.includes(originalSentence)) {
+            let fixedSentence = originalSentence;
+            actions.forEach(action => {
+                if (action.apply) {
+                    fixedSentence = action.apply(fixedSentence);
+                }
+            });
+            
+            // Only replace if changes were made
+            if (fixedSentence !== originalSentence) {
+                newText = newText.replace(originalSentence, fixedSentence);
+                appliedCount += actions.length;
+            }
+        }
+    });
+
+    if (appliedCount > 0) {
+        // 3. Update state
+        setCurrentText(newText);
+        onUpdateManuscript(newText);
+        setNotification(`Applied ${appliedCount} fixes successfully`);
+        
+        // 4. Advance index
+        // Find next non-autofixable item
+        const nextManualIndex = fixPlan.findIndex((action, i) => i >= currentFixIndex && !action.autoFixAvailable);
+        
+        if (nextManualIndex !== -1) {
+            setCurrentFixIndex(nextManualIndex);
+        } else {
+            // All done
+            setCurrentFixIndex(fixPlan.length);
+        }
+    } else {
+        // No auto-fixes found
+        alert("No remaining auto-fixes available.");
+    }
   };
 
   const handleSkip = () => {
@@ -121,11 +191,12 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
 
   const handleUndo = () => {
     if (history.length === 0) return;
-    const previousText = history[history.length - 1];
-    setCurrentText(previousText);
-    onUpdateManuscript(previousText);
+    const previousState = history[history.length - 1];
+    setCurrentText(previousState.text);
+    onUpdateManuscript(previousState.text);
     setHistory(prev => prev.slice(0, -1));
     setCurrentFixIndex(prev => Math.max(0, prev - 1));
+    setNotification("Undid last action");
   };
 
   // Calculate progress
@@ -212,16 +283,22 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
                 </div>
 
                 {/* Audit Trail Preview */}
-                <div className="flex-1 bg-slate-950 rounded-xl border border-slate-800 p-4 overflow-y-auto">
+                <div className="flex-1 bg-slate-950 rounded-xl border border-slate-800 p-4 overflow-y-auto relative">
+                    {notification && (
+                      <div className="absolute top-2 right-2 left-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-2 rounded-lg text-xs font-bold animate-in fade-in slide-in-from-top-2 flex items-center gap-2">
+                        <Icons.Check className="w-3 h-3" />
+                        {notification}
+                      </div>
+                    )}
                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Action Log</h4>
                     <div className="space-y-3">
                         {history.length === 0 ? (
                             <p className="text-xs text-slate-600 italic">No actions taken yet.</p>
                         ) : (
-                            history.map((_, i) => (
+                            history.map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 text-xs text-slate-400">
                                     <Icons.Check className="w-3 h-3 text-green-500" />
-                                    <span>Applied fix to item #{i + 1}</span>
+                                    <span>{item.description}</span>
                                 </div>
                             ))
                         )}
@@ -241,6 +318,19 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
                     >
                         <Icons.Magic className="w-4 h-4" />
                         {currentAction.autoFixAvailable ? 'Apply Fix' : 'Manual Fix Required'}
+                    </button>
+                    
+                    <button
+                        onClick={handleApplyAll}
+                        disabled={!fixPlan.some((a, i) => i >= currentFixIndex && a.autoFixAvailable)}
+                        className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                             fixPlan.some((a, i) => i >= currentFixIndex && a.autoFixAvailable)
+                             ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                             : 'bg-slate-800 text-slate-500 cursor-not-allowed hidden'
+                        }`}
+                    >
+                        <Icons.ApplyAll className="w-4 h-4" />
+                        Apply All Remaining
                     </button>
                     
                     <div className="grid grid-cols-2 gap-3">

@@ -197,15 +197,56 @@ export class CitationFinderService {
     bibContent: string
   ): { manuscript: string, bib: string } {
     
-    // Robust replacement of citation key in the manuscript
     const escapedId = oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`\\b${escapedId}\\b`, 'g');
     
     const newManuscript = manuscriptContent.replace(regex, newRef.id);
 
-    // Update bibliography
     const newBib = upsertAndSortBibTexEntries(bibContent, [this.generateBibTeX(newRef)]);
 
     return { manuscript: newManuscript, bib: newBib };
+  }
+
+  public autoAddForGap(
+    sentenceText: string,
+    triggerPhrase: string | undefined,
+    newRef: ProcessedReference,
+    manuscriptContent: string,
+    bibContent: string
+  ): { manuscript: string; bib: string } {
+    let updated = manuscriptContent;
+    const key = newRef.id;
+    const citePattern = new RegExp(`\\\\(?:cite|parencite|textcite|footcite)[^\\{]*\\{[^}]*\\b${key}\\b[^}]*\\}`);
+    if (!citePattern.test(updated)) {
+      const insertCite = (text: string, idx: number) => {
+        const citeStr = ` \\cite{${key}}`;
+        const before = text.slice(0, idx);
+        const after = text.slice(idx);
+        return before + citeStr + after;
+      };
+      let inserted = false;
+      if (triggerPhrase && triggerPhrase.trim().length > 0) {
+        const ci = updated.toLowerCase().indexOf(triggerPhrase.toLowerCase());
+        if (ci !== -1) {
+          const at = ci + triggerPhrase.length;
+          updated = insertCite(updated, at);
+          inserted = true;
+        }
+      }
+      if (!inserted) {
+        const esc = sentenceText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const si = updated.search(new RegExp(esc));
+        if (si !== -1) {
+          const at = si + sentenceText.length;
+          updated = insertCite(updated, at);
+          inserted = true;
+        }
+      }
+      if (!inserted) {
+        updated = `${updated}\n\n% RefScore\n\\noindent\\textit{\\small Added citation: }\\cite{${key}}.`;
+      }
+    }
+    const newBib = upsertAndSortBibTexEntries(bibContent, [this.generateBibTeX(newRef)]);
+    return { manuscript: updated, bib: newBib };
   }
 }

@@ -77,10 +77,23 @@ def _lazy_load_ml_deps():
 
 # ---------------- Logging Setup ----------------
 LOG_FILE = 'deep_research_tool_improved.log'
+
+# Ensure console can handle unicode characters on Windows
+if sys.platform == 'win32':
+    import io
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()]
+    handlers=[
+        logging.FileHandler(LOG_FILE, encoding='utf-8'),
+        logging.StreamHandler(sys.stdout)
+    ]
 )
 
 # NLTK download and torch setup moved to _lazy_load_ml_deps
@@ -716,7 +729,13 @@ class DocumentRefiner:
             # Formula: Sim * (1 + QualityBoosts)
             final_score = similarity * (1.0 + 0.2 * citation_score + 0.1 * recency_score)
 
-            logging.info(f"Candidate: '{title[:30]}...' Sim={similarity:.3f}, Cit={citations}, Score={final_score:.3f}")
+            # Extra safety for console encoding
+            try:
+                safe_title = title[:30].encode(sys.stdout.encoding or 'utf-8', errors='replace').decode(sys.stdout.encoding or 'utf-8', errors='replace')
+            except Exception:
+                safe_title = title[:30].replace('\u2005', ' ') # Manual fallback for the specific character
+                
+            logging.info(f"Candidate: '{safe_title}...' Sim={similarity:.3f}, Cit={citations}, Score={final_score:.3f}")
             
             if final_score > best_score:
                 best_score = final_score

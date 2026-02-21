@@ -84,7 +84,7 @@ describe('DocumentViewer', () => {
     );
 
     expect(screen.getAllByText(/This is a sentence with a citation/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/ref1/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Author 2023/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/This sentence has no citation/).length).toBeGreaterThan(0);
   });
 
@@ -119,8 +119,8 @@ describe('DocumentViewer', () => {
         />
      );
 
-     expect(screen.getByText(/Here is a complex citation/)).toBeInTheDocument();
-     expect(screen.getAllByText(/ref1/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Here is a complex citation/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Author 2023/).length).toBeGreaterThan(0);
      expect(screen.getAllByText(/ref2/).length).toBeGreaterThan(0);
   });
 
@@ -149,20 +149,24 @@ describe('DocumentViewer', () => {
           id: 'Smith2020Trust',
           title: 'Trust and Minimalist Signaling in Consumer Contexts',
           authors: ['Smith'],
-          year: '2020',
+          year: 2020,
           venue: 'Journal of Marketing',
           abstract: '...',
           doi: '10.1234/example'
         }
       ]),
-      generateBibTeX: vi.fn().mockReturnValue('@article{Smith2020Trust, title={...}}')
+      generateBibTeX: vi.fn().mockReturnValue('@article{Smith2020Trust, title={...}}'),
+      autoAddForGap: vi.fn().mockReturnValue({
+        manuscript: "It remains unknown whether quiet luxury cues affect trust. \\cite{Smith2020Trust}",
+        bib: "@article{Smith2020Trust, title={...}}"
+      })
     };
 
     render(
       <DocumentViewer
         result={gapResult}
         onReset={() => {}}
-        onUpdate={() => {}}
+        onUpdate={vi.fn()}
         manuscriptText={gapResult.analyzedSentences[0].text}
         bibliographyText=""
         scoringConfig={mockConfig}
@@ -188,5 +192,10 @@ describe('DocumentViewer', () => {
 
     // Copy BibTeX button present
     expect(screen.getByRole('button', { name: /Copy BibTeX/i })).toBeInTheDocument();
+
+    const autoAddBtn = screen.getByRole('button', { name: /Auto Add/i });
+    expect(autoAddBtn).toBeInTheDocument();
+    fireEvent.click(autoAddBtn);
+    expect(finderMock.autoAddForGap).toHaveBeenCalledTimes(1);
   });
 });

@@ -595,6 +595,30 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ result, onReset,
                                     >
                                       Copy BibTeX
                                     </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        try {
+                                          const upd = finderService.autoAddForGap(
+                                            item.text,
+                                            item.triggerPhrase,
+                                            ref as any,
+                                            manuscriptText,
+                                            bibliographyText
+                                          );
+                                          setGapStatus(`Added citation [${ref.id}] and updated bibliography.`);
+                                          onUpdate(upd.manuscript, upd.bib);
+                                          setGapResolved(prev => new Set([...Array.from(prev), item.idx]));
+                                        } catch {
+                                          setGapStatus('Failed to auto add citation.');
+                                        }
+                                      }}
+                                      className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold rounded border border-brand-500/30 bg-brand-600 text-white hover:bg-brand-500 transition-colors"
+                                      aria-label="Auto Add"
+                                    >
+                                      Auto Add
+                                    </button>
                                   </div>
                                 </div>
                               </div>
@@ -656,6 +680,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ result, onReset,
             Manuscript Review
           </h2>
           <div className="flex items-center gap-4">
+              <button
+                  onClick={() => setIsFixModeOpen(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-lg shadow-lg shadow-brand-500/20 transition-all"
+              >
+                  <Icons.Magic className="w-3.5 h-3.5" />
+                  Guided Fix
+              </button>
+
               <div className="hidden md:flex text-xs font-medium text-slate-400 items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-800 shadow-sm">
                 <Icons.Search className="w-3.5 h-3.5 text-brand-400" />
                 Click citation pills to inspect
@@ -763,6 +795,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ result, onReset,
       <div className="w-full lg:w-[420px] flex flex-col gap-6 shrink-0" aria-live="polite">
         {panelContent}
       </div>
-      </div>
+
+      <GuidedFixOverlay 
+        isOpen={isFixModeOpen} 
+        onClose={() => setIsFixModeOpen(false)} 
+        result={result} 
+        manuscriptText={manuscriptText} 
+        onUpdateManuscript={(newText) => onUpdate(newText, bibliographyText)} 
+      />
+    </div>
   );
 };
