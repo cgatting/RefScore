@@ -27,7 +27,8 @@ import {
   X,
   Sparkles,
   AlertCircle,
-  Wand2
+  Wand2,
+  CheckCheck
 } from 'lucide-react';
 
 // Icons mapping
@@ -66,5 +67,6 @@ export const Icons = {
   Settings: Settings,
   X: X,
   Close: X,
-  Magic: Wand2
+  Magic: Wand2,
+  ApplyAll: CheckCheck
 };

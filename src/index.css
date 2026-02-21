@@ -173,11 +173,12 @@
   }
   
   .glass-card {
-    @apply backdrop-blur-sm bg-slate-900/60 border border-slate-700/60 shadow-md transition-all duration-300;
+    @apply bg-slate-900 border border-slate-700 shadow-md transition-all duration-300;
   }
 
-  .text-gradient {
-    @apply text-white;
+  .bg-grid {
+    background-image: radial-gradient(circle, #2E2E2E 1px, transparent 1px);
+    background-size: 40px 40px;
   }
 
   .animate-fade-in {
