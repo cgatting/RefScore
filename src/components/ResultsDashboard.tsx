@@ -17,15 +17,22 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onRe
   const [sortField, setSortField] = useState<'id' | 'title' | 'year' | 'score'>('id');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const computeScore = (scores: any) => {
     return new ScoringEngine(scoringConfig).computeWeightedTotal(scores);
   };
 
   const handleExport = async () => {
+    setExportError(null);
     setIsExporting(true);
-    await generatePDF('dashboard-content', result.documentTitle || 'RefScore_Report');
-    setIsExporting(false);
+    try {
+      await generatePDF('dashboard-content', result.documentTitle || 'RefScore_Report');
+    } catch (e: any) {
+      setExportError(e?.message || 'Export failed');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const references = Object.values(result.references) as ProcessedReference[];
@@ -111,6 +118,11 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onRe
             )}
             {isExporting ? 'Exporting...' : 'Export PDF'}
           </button>
+          {exportError && (
+            <div className="text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-1 rounded">
+              {exportError}
+            </div>
+          )}
         </div>
       </div>
 

@@ -4,8 +4,10 @@ export const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
 export const err = <E>(error: E): Result<never, E> => ({ ok: false, error });
 
 export const unwrap = <T, E>(result: Result<T, E>): T => {
-  if (result.ok) return result.value;
-  throw result.error;
+  if ('error' in result) {
+    throw result.error;
+  }
+  return result.value;
 };
 
 export const mapResult = <T, U, E>(result: Result<T, E>, fn: (val: T) => U): Result<U, E> => {

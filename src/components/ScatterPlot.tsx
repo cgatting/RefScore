@@ -45,7 +45,7 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({ references }) => {
         </p>
       </div>
       
-      <ResponsiveContainer width="100%" height="85%">
+      <ResponsiveContainer width="100%" height="85%" minWidth={0} minHeight={200}>
         <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
           <XAxis 
             type="number" 

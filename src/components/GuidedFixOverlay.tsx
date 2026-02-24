@@ -1,15 +1,18 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Icons } from './Icons';
-import { AnalysisResult, AnalyzedSentence } from '../types';
+import { AnalysisResult, AnalyzedSentence, ProcessedReference } from '../types';
 import { GuidedFixService, FixAction } from '../services/GuidedFixService';
+import { CitationFinderService } from '../services/CitationFinderService';
+import { computeWeightedTotal } from '../services/scoring/ScoringEngine';
 
 interface GuidedFixOverlayProps {
   isOpen: boolean;
   onClose: () => void;
   result: AnalysisResult;
   manuscriptText: string;
-  onUpdateManuscript: (newText: string) => void;
+  bibliographyText: string;
+  onUpdate: (newManuscript: string, newBib: string) => void;
 }
 
 export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
@@ -17,12 +20,17 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
   onClose,
   result,
   manuscriptText,
-  onUpdateManuscript
+  bibliographyText,
+  onUpdate
 }) => {
   const [currentFixIndex, setCurrentFixIndex] = useState(0);
-  const [history, setHistory] = useState<{text: string, description: string}[]>([]);
+  const [history, setHistory] = useState<{text: string, bib: string, description: string}[]>([]);
   const [currentText, setCurrentText] = useState(manuscriptText);
+  const [currentBib, setCurrentBib] = useState(bibliographyText);
   const [notification, setNotification] = useState<string | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualText, setManualText] = useState('');
 
   useEffect(() => {
     if (notification) {
@@ -42,7 +50,8 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
   // Effect to sync internal text state with prop
   useEffect(() => {
     setCurrentText(manuscriptText);
-  }, [manuscriptText]);
+    setCurrentBib(bibliographyText);
+  }, [manuscriptText, bibliographyText]);
 
   if (!isOpen) return null;
 
@@ -87,51 +96,79 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
   }
 
   const handleApply = () => {
-    // 1. Save history
-    setHistory(prev => [...prev, { text: currentText, description: `Fixed: ${currentAction.type}` }]);
-
-    // 2. Apply Fix
-    let newText = currentText;
-    if (currentAction.apply) {
-        // If the action has a specific apply function (regex replacement), use it
-        // Note: This is simplistic; for sentence-specific replacement we need more robust logic
-        // For now, we assume global replace or specific sentence replacement if we had offsets
-        // Let's implement a simple sentence replacement based on index
-        
-        // Find the sentence in the current text (this is tricky if text changed)
-        // We will use the original sentence text from analysis result to locate it
+    setIsApplying(true);
+    try {
+      setHistory(prev => [...prev, { text: currentText, bib: currentBib, description: `Fixed: ${currentAction.type}` }]);
+      let newText = currentText;
+      if (currentAction.apply) {
         const originalSentence = result.analyzedSentences[currentAction.sentenceIndex].text;
-        
-        // Simple replacement: replace first occurrence of original sentence with fixed version
-        // Ideally we would use precise offsets from the parser
+        const fixedSentence = currentAction.apply(originalSentence);
         if (currentText.includes(originalSentence)) {
-             const fixedSentence = currentAction.apply(originalSentence);
-             newText = currentText.replace(originalSentence, fixedSentence);
+          newText = currentText.replace(originalSentence, fixedSentence);
+        } else {
+          const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const flexible = new RegExp(escapeRegex(originalSentence).replace(/\\s+/g, '\\s+'), 'm');
+          if (flexible.test(currentText)) {
+            newText = currentText.replace(flexible, fixedSentence);
+          } else {
+            setNotification("Could not locate the target sentence. No changes made.");
+            return;
+          }
         }
-    } else {
-        // Manual fix or complex fix - for now just skip or simulate
-        // In a real implementation, we would prompt for the replacement text
-        alert("This fix requires manual intervention. Please edit the text directly.");
-        return; 
+      } else {
+        openManual();
+        return;
+      }
+      setCurrentText(newText);
+      onUpdate(newText, currentBib);
+      setNotification("Fix applied successfully");
+      setCurrentFixIndex(prev => prev + 1);
+    } finally {
+      setIsApplying(false);
     }
+  };
 
-    // 3. Update state
-    setCurrentText(newText);
-    onUpdateManuscript(newText);
-    setNotification("Fix applied successfully");
-    
-    // 4. Move to next
-    setCurrentFixIndex(prev => prev + 1);
+  const handleSuggestionSelect = (ref: ProcessedReference) => {
+    setIsApplying(true);
+    try {
+      setHistory(prev => [...prev, { text: currentText, bib: currentBib, description: `Added citation: ${ref.id}` }]);
+      
+      const originalSentence = result.analyzedSentences[currentAction.sentenceIndex].text;
+      const finder = new CitationFinderService();
+      
+      const update = finder.autoAddForGap(
+        originalSentence,
+        result.analyzedSentences[currentAction.sentenceIndex].triggerPhrase,
+        ref,
+        currentText,
+        currentBib
+      );
+
+      setCurrentText(update.manuscript);
+      setCurrentBib(update.bib);
+      onUpdate(update.manuscript, update.bib);
+      
+      setNotification(`Added citation ${ref.id}`);
+      setCurrentFixIndex(prev => prev + 1);
+    } catch (e) {
+      console.error(e);
+      setNotification("Failed to add citation");
+    } finally {
+      setIsApplying(false);
+    }
   };
 
   const handleApplyAll = () => {
     // 1. Save history
-    setHistory(prev => [...prev, { text: currentText, description: "Batch applied all remaining fixes" }]);
+    setHistory(prev => [...prev, { text: currentText, bib: currentBib, description: "Batch applied all remaining fixes" }]);
 
     let newText = currentText;
     let appliedCount = 0;
 
     // 2. Get all remaining auto-fixable actions
+    // Skip actions that have suggestions to force manual review? 
+    // Or just apply the placeholder as fallback? 
+    // Let's stick to existing behavior: apply placeholder if user clicks Apply All.
     const remainingActions = fixPlan.slice(currentFixIndex).filter(a => a.autoFixAvailable && a.apply);
     
     // Group by sentence index to handle multiple fixes per sentence
@@ -166,7 +203,7 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
     if (appliedCount > 0) {
         // 3. Update state
         setCurrentText(newText);
-        onUpdateManuscript(newText);
+        onUpdate(newText, currentBib);
         setNotification(`Applied ${appliedCount} fixes successfully`);
         
         // 4. Advance index
@@ -180,8 +217,7 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
             setCurrentFixIndex(fixPlan.length);
         }
     } else {
-        // No auto-fixes found
-        alert("No remaining auto-fixes available.");
+        setNotification("No remaining auto-fixes available.");
     }
   };
 
@@ -193,7 +229,8 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
     if (history.length === 0) return;
     const previousState = history[history.length - 1];
     setCurrentText(previousState.text);
-    onUpdateManuscript(previousState.text);
+    setCurrentBib(previousState.bib);
+    onUpdate(previousState.text, previousState.bib);
     setHistory(prev => prev.slice(0, -1));
     setCurrentFixIndex(prev => Math.max(0, prev - 1));
     setNotification("Undid last action");
@@ -201,6 +238,26 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
 
   // Calculate progress
   const progress = ((currentFixIndex) / fixPlan.length) * 100;
+
+  const openManual = () => {
+    if (!currentAction) return;
+    const originalSentence = result.analyzedSentences[currentAction.sentenceIndex].text;
+    setManualText(originalSentence);
+    setManualOpen(true);
+  };
+  const applyManual = () => {
+    if (!currentAction) return;
+    const originalSentence = result.analyzedSentences[currentAction.sentenceIndex].text;
+    const newText = currentText.includes(originalSentence)
+      ? currentText.replace(originalSentence, manualText)
+      : currentText;
+    setHistory(prev => [...prev, { text: currentText, bib: currentBib, description: `Manual fix: ${currentAction.type}` }]);
+    setCurrentText(newText);
+    onUpdate(newText, currentBib);
+    setNotification("Manual fix applied");
+    setCurrentFixIndex(prev => prev + 1);
+    setManualOpen(false);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
@@ -265,6 +322,60 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
                          </div>
                     </div>
                 </div>
+
+                {currentAction.suggestedReferences && currentAction.suggestedReferences.length > 0 && (
+                  <div className="mt-6 animate-fade-in-up">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                        <Icons.Search className="w-3 h-3" />
+                        Suggested Sources
+                      </span>
+                      <span className="text-[10px] text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
+                        Based on claim context
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                      {currentAction.suggestedReferences.map((ref) => {
+                        const score = ref.scores ? Math.round(computeWeightedTotal(ref.scores)) : 0;
+                        return (
+                          <div 
+                            key={ref.id} 
+                            onClick={() => handleSuggestionSelect(ref)}
+                            className="p-4 bg-slate-800/40 rounded-xl border border-slate-700/60 hover:border-brand-500/50 hover:bg-slate-800/80 transition-all group cursor-pointer relative overflow-hidden"
+                          >
+                             <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-xs font-bold text-brand-400 bg-brand-500/10 px-2 py-1 rounded-lg border border-brand-500/20">Apply This Source</span>
+                             </div>
+                             
+                             <div className="flex justify-between items-start mb-2 pr-20">
+                                <h4 className="text-sm font-bold text-slate-200 group-hover:text-brand-300 leading-snug">{ref.title}</h4>
+                             </div>
+                             
+                             <p className="text-xs text-slate-400 mb-3 line-clamp-2 leading-relaxed">{ref.abstract}</p>
+                             
+                             <div className="flex items-center gap-3">
+                                <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] font-bold ${
+                                  score >= 70 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                  score >= 50 ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                  'bg-slate-700 text-slate-400 border-slate-600'
+                                }`}>
+                                   <Icons.Chart className="w-3 h-3" />
+                                   Match: {score}/100
+                                </div>
+                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-[10px] text-slate-400 font-mono">
+                                   <Icons.Calendar className="w-3 h-3" />
+                                   {ref.year}
+                                </div>
+                                <div className="text-[10px] text-slate-500 truncate max-w-[150px]">
+                                  {ref.authors.slice(0, 2).join(', ')}{ref.authors.length > 2 ? ' et al.' : ''}
+                                </div>
+                             </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
             </div>
 
             {/* Right: Controls & Metadata */}
@@ -309,16 +420,28 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
                 <div className="space-y-3 pt-4 border-t border-slate-700">
                     <button 
                         onClick={handleApply}
-                        disabled={!currentAction.autoFixAvailable}
+                        disabled={!currentAction.autoFixAvailable || isApplying}
                         className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-                            currentAction.autoFixAvailable 
+                            currentAction.autoFixAvailable && !isApplying
                             ? 'bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-500/20' 
+                            : currentAction.autoFixAvailable && isApplying
+                            ? 'bg-brand-600 text-white opacity-80 cursor-wait'
                             : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                         }`}
                     >
-                        <Icons.Magic className="w-4 h-4" />
-                        {currentAction.autoFixAvailable ? 'Apply Fix' : 'Manual Fix Required'}
+                        <Icons.Magic className={`w-4 h-4 ${isApplying ? 'animate-spin' : ''}`} />
+                        {currentAction.autoFixAvailable ? (isApplying ? 'Applying…' : 'Apply Fix') : 'Manual Fix Required'}
                     </button>
+                    
+                    {!currentAction.autoFixAvailable && (
+                      <button
+                        onClick={openManual}
+                        className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+                      >
+                        <Icons.Lightbulb className="w-4 h-4" />
+                        Apply Manual Fix
+                      </button>
+                    )}
                     
                     <button
                         onClick={handleApplyAll}
@@ -356,6 +479,31 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
 
             </div>
         </div>
+
+        {/* Manual Fix Modal */}
+        {manualOpen && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-6">
+            <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-xl shadow-2xl">
+              <h3 className="text-lg font-bold text-white mb-2">Manual Fix</h3>
+              <p className="text-xs text-slate-400 mb-3">Edit the sentence below and apply your changes.</p>
+              <textarea
+                value={manualText}
+                onChange={(e) => setManualText(e.target.value)}
+                className="w-full h-40 p-3 rounded-lg bg-slate-800 border border-slate-700 text-slate-200"
+              />
+              <div className="mt-4 flex gap-3 justify-end">
+                <button
+                  onClick={() => setManualOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700"
+                >Cancel</button>
+                <button
+                  onClick={applyManual}
+                  className="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white"
+                >Apply</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="bg-slate-900 p-3 border-t border-slate-800 flex justify-between items-center text-xs text-slate-500 px-6">

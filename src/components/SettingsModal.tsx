@@ -28,7 +28,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, c
   }, [config, isOpen]);
 
   useEffect(() => {
-    const sum = Object.values(weights).reduce((acc, val) => acc + val, 0);
+    const sum = (Object.values(weights) as number[]).reduce((acc, val) => acc + val, 0);
     setTotal(sum);
   }, [weights]);
 
@@ -108,7 +108,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, c
           </div>
 
           <div className="space-y-5">
-            {Object.entries(weights).map(([key, val]) => (
+            {(Object.entries(weights) as [keyof ScoringConfig['weights'], number][])
+              .map(([key, val]) => (
               <div key={key} className="space-y-2">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-bold text-slate-300 capitalize">{key}</label>

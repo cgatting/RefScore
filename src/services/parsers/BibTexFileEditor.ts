@@ -1,3 +1,5 @@
+import type { ProcessedReference } from '../../types';
+
 export type BibTexEntryBlock = {
   key: string;
   raw: string;

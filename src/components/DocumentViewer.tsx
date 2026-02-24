@@ -300,7 +300,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ result, onReset,
                 <Icons.Chart className="w-3 h-3 text-brand-400" /> Dimension Breakdown
               </h4>
               <div className="grid grid-cols-2 gap-3">
-                {Object.entries(activeAnalysis.scores).map(([key, val]) => (
+                {(Object.entries(activeAnalysis.scores) as [string, number][]).map(([key, val]) => (
                   <div
                     key={key}
                     title={DIMENSION_DESCRIPTIONS[key.toLowerCase()] || 'Analysis metric'}
@@ -801,7 +801,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({ result, onReset,
         onClose={() => setIsFixModeOpen(false)} 
         result={result} 
         manuscriptText={manuscriptText} 
-        onUpdateManuscript={(newText) => onUpdate(newText, bibliographyText)} 
+        bibliographyText={bibliographyText}
+        onUpdate={(newManuscript, newBib) => onUpdate(newManuscript, newBib)} 
       />
     </div>
   );

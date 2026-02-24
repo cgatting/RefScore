@@ -31,7 +31,7 @@ if errorlevel 1 (
 
 if exist "deepsearch_api.py" (
   echo [INFO] Starting DeepSearch API at http://127.0.0.1:8000
-  start "DeepSearch API" cmd /k "set CLICK_DISABLE_ARG_EXPANSION=1 && set REFSCORE_SERVE_DIST=0 && .venv\Scripts\activate && uvicorn deepsearch_api:app --host 127.0.0.1 --port 8000 --reload --reload-dir %CD% --reload-exclude .venv --reload-exclude node_modules --reload-exclude dist --reload-exclude __pycache__"
+  start "DeepSearch API" cmd /k "set CLICK_DISABLE_ARG_EXPANSION=1 && set REFSCORE_SERVE_DIST=0 && set REFSCORE_PRELOAD_NLP=0 && .venv\Scripts\activate && uvicorn deepsearch_api:app --host 127.0.0.1 --port 8000 --reload --reload-dir %CD% --reload-exclude .venv --reload-exclude node_modules --reload-exclude dist --reload-exclude __pycache__ --reload-exclude tests --reload-exclude artifacts --reload-exclude coverage --reload-exclude test-results --reload-exclude playwright-report"
 )
 
 if not exist "node_modules" (

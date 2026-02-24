@@ -10,6 +10,7 @@ export interface FixAction {
   suggestion: string;
   autoFixAvailable: boolean;
   apply?: (currentText: string) => string;
+  suggestedReferences?: ProcessedReference[];
 }
 
 export class GuidedFixService {
@@ -28,9 +29,12 @@ export class GuidedFixService {
           type: 'missing_citation',
           severity: 'high',
           description: `Sentence contains a claim ("${sentence.triggerPhrase || 'suggests'}") but lacks a citation.`,
-          suggestion: 'Add a citation placeholder to support this claim.',
+          suggestion: sentence.suggestedReferences && sentence.suggestedReferences.length > 0 
+            ? 'Select a suggested source or add a placeholder.' 
+            : 'Add a citation placeholder to support this claim.',
           autoFixAvailable: true, 
           apply: (text) => `${text} [CITATION NEEDED]`,
+          suggestedReferences: sentence.suggestedReferences,
         });
       }
 
@@ -72,9 +76,12 @@ export class GuidedFixService {
           type: 'gap',
           severity: 'medium',
           description: 'This sentence identifies a potential research gap.',
-          suggestion: 'Highlight this gap for further exploration.',
+          suggestion: sentence.suggestedReferences && sentence.suggestedReferences.length > 0 
+            ? 'Fill this gap with a suggested paper.' 
+            : 'Highlight this gap for further exploration.',
           autoFixAvailable: true,
           apply: (text) => `${text} [RESEARCH GAP]`,
+          suggestedReferences: sentence.suggestedReferences,
         });
       }
 
