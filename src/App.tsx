@@ -291,6 +291,9 @@ function App() {
                         </div>
                         <button
                           type="button"
+                          role="switch"
+                          aria-checked={autoGenerateBib}
+                          aria-label="Toggle auto-generate references"
                           onClick={() => setAutoGenerateBib(prev => !prev)}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                             autoGenerateBib ? 'bg-brand-500' : 'bg-slate-700'

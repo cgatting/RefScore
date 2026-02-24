@@ -156,7 +156,7 @@ export const generatePDF = async (elementId: string, title: string = 'RefScore A
 
   } catch (error) {
     console.error('PDF Generation failed:', error);
-    alert('PDF Generation failed. Please check console for details.');
+    throw new Error('PDF Generation failed');
   } finally {
     if (cloneContainer.isConnected) {
       cloneContainer.remove();

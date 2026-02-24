@@ -44,6 +44,8 @@ export default defineConfig(({ mode }) => {
         globals: true,
         environment: 'jsdom',
         setupFiles: './tests/setup.ts',
+        include: ['src/**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{test,spec}.{ts,tsx}'],
+        exclude: ['node_modules', 'dist', 'playwright-report', 'tests/e2e', 'artifacts'],
       },
       resolve: {
         alias: {

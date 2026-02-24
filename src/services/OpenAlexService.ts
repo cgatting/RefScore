@@ -178,14 +178,30 @@ export class OpenAlexService {
   public calculateScores(paper: OpenAlexPaper): DimensionScores {
     const recencyScore = this.calculateRecencyScore(paper.publication_year);
     const authorityScore = this.calculateAuthorityScore(paper.cited_by_count || 0);
-    
+    const title = (paper.display_name || paper.title || '').toLowerCase();
+    const abstract = (paper.abstract || '');
+    const absLower = abstract.toLowerCase();
+    const stop = new Set(['the','and','for','with','that','this','from','into','within','between','using','use','via','their','our','your','are','was','were','been','being','have','has','had','not','but','can','could','should','would','may','might','than','then','over','under','on','off','into','onto','about','after','before','during','while','because','as','of','in','to','by','at','or','an','a']);
+    const tokens = (s: string) => s.split(/\W+/).filter(w => w.length > 2 && !stop.has(w));
+    const tSet = new Set(tokens(title));
+    const aSet = new Set(tokens(absLower));
+    let inter = 0;
+    tSet.forEach(w => { if (aSet.has(w)) inter++; });
+    const union = new Set([...tSet, ...aSet]).size || 1;
+    const alignmentScore = Math.min(100, Math.max(0, (inter / union) * 100));
+    const numbersScore = /\d/.test(abstract) ? 100 : 40;
+    const acronyms = (abstract.match(/\b[A-Z]{2,}\b/g) || []).length;
+    const entitiesScore = Math.min(100, 50 + acronyms * 10);
+    const methodKeywords = ['method','approach','algorithm','framework','model','randomized','experiment','evaluation','metric','pipeline','procedure'];
+    const mkCount = methodKeywords.reduce((acc, k) => acc + (absLower.includes(k) ? 1 : 0), 0);
+    const methodsScore = Math.min(100, 50 + mkCount * 10);
     return {
-        Alignment: 85, // Placeholder
-        Numbers: 50,   // Placeholder
-        Entities: 60,  // Placeholder
-        Methods: 70,   // Placeholder
-        Recency: recencyScore,
-        Authority: authorityScore
+      Alignment: alignmentScore,
+      Numbers: numbersScore,
+      Entities: entitiesScore,
+      Methods: methodsScore,
+      Recency: recencyScore,
+      Authority: authorityScore
     };
   }
 

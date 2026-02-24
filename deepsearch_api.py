@@ -69,10 +69,14 @@ nlp_processor = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global nlp_processor
-    try:
-        nlp_processor = NLPProcessor(DEFAULT_SETTINGS)
-    except Exception as e:
-        logging.error(f"Failed to initialize NLP processor: {e}")
+    preload = os.environ.get("REFSCORE_PRELOAD_NLP", "0")
+    if preload == "1":
+        try:
+            nlp_processor = NLPProcessor(DEFAULT_SETTINGS)
+        except Exception as e:
+            logging.error(f"Failed to initialize NLP processor: {e}")
+            nlp_processor = None
+    else:
         nlp_processor = None
     yield
     # Cleanup if needed
@@ -94,6 +98,7 @@ def get_refiner(settings=None):
     if nlp_processor is None:
         try:
             processor = NLPProcessor(settings)
+            globals()["nlp_processor"] = processor
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"NLP processor unavailable: {e}")
     else:
