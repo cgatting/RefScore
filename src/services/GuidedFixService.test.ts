@@ -15,7 +15,7 @@ describe('GuidedFixService', () => {
     gaps: [],
   });
 
-  it('should generate an auto-fix for missing citations', () => {
+  it('should generate an auto-fix for missing citations', async () => {
     const sentence: AnalyzedSentence = {
       text: 'This is a claim.',
       citations: [],
@@ -24,7 +24,7 @@ describe('GuidedFixService', () => {
       isMissingCitation: true,
     };
 
-    const actions = service.generateFixPlan(mockResult(sentence));
+    const actions = await service.generateFixPlan(mockResult(sentence));
     const action = actions.find(a => a.type === 'missing_citation');
 
     expect(action).toBeDefined();
@@ -37,7 +37,7 @@ describe('GuidedFixService', () => {
     }
   });
 
-  it('should generate an auto-fix for low relevance citations', () => {
+  it('should generate an auto-fix for low relevance citations', async () => {
     const sentence: AnalyzedSentence = {
       text: 'This is cited [Ref1].',
       citations: ['Ref1'],
@@ -48,7 +48,7 @@ describe('GuidedFixService', () => {
       }
     };
 
-    const actions = service.generateFixPlan(mockResult(sentence));
+    const actions = await service.generateFixPlan(mockResult(sentence));
     const action = actions.find(a => a.type === 'low_relevance');
 
     expect(action).toBeDefined();
@@ -60,7 +60,7 @@ describe('GuidedFixService', () => {
     }
   });
 
-  it('should generate an auto-fix for outdated citations', () => {
+  it('should generate an auto-fix for outdated citations', async () => {
     const sentence: AnalyzedSentence = {
       text: 'This is cited [Ref1].',
       citations: ['Ref1'],
@@ -71,7 +71,7 @@ describe('GuidedFixService', () => {
       }
     };
 
-    const actions = service.generateFixPlan(mockResult(sentence));
+    const actions = await service.generateFixPlan(mockResult(sentence));
     const action = actions.find(a => a.type === 'outdated');
 
     expect(action).toBeDefined();
