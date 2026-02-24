@@ -1,5 +1,6 @@
 
 import { AnalysisResult, AnalyzedSentence, ProcessedReference } from '../types';
+import { CitationFinderService } from './CitationFinderService';
 
 export interface FixAction {
   id: string;
@@ -11,16 +12,19 @@ export interface FixAction {
   autoFixAvailable: boolean;
   apply?: (currentText: string) => string;
   suggestedReferences?: ProcessedReference[];
+  citationKey?: string;
 }
 
 export class GuidedFixService {
+  private citationFinder = new CitationFinderService();
+
   /**
    * Generates a list of fix actions based on the analysis result.
    */
-  public generateFixPlan(result: AnalysisResult): FixAction[] {
+  public async generateFixPlan(result: AnalysisResult): Promise<FixAction[]> {
     const actions: FixAction[] = [];
 
-    result.analyzedSentences.forEach((sentence, index) => {
+    await Promise.all(result.analyzedSentences.map(async (sentence, index) => {
       // 1. Check for Missing Citations
       if (sentence.isMissingCitation) {
         actions.push({
@@ -40,17 +44,33 @@ export class GuidedFixService {
 
       // 2. Check for Low Relevance Scores
       if (sentence.citations.length > 0 && sentence.scores) {
-        Object.entries(sentence.scores).forEach(([citKey, scores]) => {
+        await Promise.all(Object.entries(sentence.scores).map(async ([citKey, scores]) => {
           if (scores.Alignment < 0.4) {
+            let suggestions: ProcessedReference[] = [];
+            const ref = result.references[citKey];
+            
+            if (ref) {
+              try {
+                // Search for better sources (Alignment > current + improvement threshold)
+                suggestions = await this.citationFinder.findBetterSources(ref, sentence.text, scores.Alignment);
+              } catch (e) {
+                console.warn(`Failed to find better sources for ${citKey}`, e);
+              }
+            }
+
             actions.push({
               id: `fix-low-rel-${index}-${citKey}`,
               sentenceIndex: index,
               type: 'low_relevance',
               severity: 'medium',
               description: `Citation [${citKey}] has low relevance alignment (${Math.round(scores.Alignment * 100)}%).`,
-              suggestion: 'Mark for review with a placeholder.',
+              suggestion: suggestions.length > 0 
+                ? 'Replace with a better aligned source.' 
+                : 'Mark for review with a placeholder.',
               autoFixAvailable: true,
               apply: (text) => `${text} [RELEVANCE CHECK: ${citKey}]`,
+              suggestedReferences: suggestions,
+              citationKey: citKey,
             });
           }
           if (scores.Recency < 0.2) {
@@ -65,7 +85,7 @@ export class GuidedFixService {
               apply: (text) => `${text} [UPDATE NEEDED: ${citKey}]`,
             }); 
           }
-        });
+        }));
       }
 
       // 4. Check for Identified Gaps
@@ -112,7 +132,7 @@ export class GuidedFixService {
           apply: (text) => text.replace(/\s{2,}/g, ' '),
         });
       }
-    });
+    }));
 
     return actions.sort((a, b) => {
         // Sort by severity

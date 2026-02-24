@@ -10,15 +10,15 @@ license: mit
 
 # RefScore
 
-RefScore is a multi-dimensional algorithmic system for automated academic reference analysis and document alignment. It leverages the OpenAlex API and local NLP techniques (TF-IDF, Entity Extraction) to validate citations, ensure authority, and perfect your bibliography.
+RefScore is a multi-dimensional system for automated academic reference analysis and manuscript alignment. It combines OpenAlex metadata with local NLP (TF-IDF, entity extraction) to validate citations, surface gaps, and improve bibliography quality.
 
 ## Features
 
-- **Document Parsing**: Support for LaTeX and BibTeX files.
-- **Citation Analysis**: Automated extraction and validation of citations within your manuscript.
-- **Reference Scoring**: Multi-dimensional scoring engine to evaluate the quality and relevance of references using vector embeddings.
-- **OpenAlex Integration**: Integration with OpenAlex for retrieving metadata and validating academic papers.
-- **Interactive Dashboard**: React-based UI for visualizing analysis results including citation gaps and reference quality.
+- **Document parsing**: LaTeX and BibTeX ingestion.
+- **Citation analysis**: Extraction, validation, and gap detection.
+- **Reference scoring**: Multi-dimensional relevance scoring.
+- **OpenAlex integration**: Metadata retrieval and paper validation.
+- **Interactive dashboards**: Visualize alignment, gaps, and reference quality.
 
 ## Prerequisites
 
@@ -46,15 +46,26 @@ RefScore is a multi-dimensional algorithmic system for automated academic refere
     npm test
     ```
 
+## Scripts
+
+- `npm run dev`: Start the Vite dev server
+- `npm run build`: Create a production build
+- `npm run preview`: Preview the production build
+- `npm run test`: Run unit tests with Vitest
+- `npm run test:e2e`: Run Playwright end-to-end tests
+- `npm run test:backend`: Run backend pytest suite
+- `npm run lint`: Run ESLint
+- `npm run perf:run`: Run the performance test suite
+
 ## Project Structure
 
-- `src/`: Source code
-  - `components/`: React UI components
-  - `services/`: Core business logic (NLP, Parsing, Scoring)
-  - `utils/`: Utility functions
-- `tests/`: Unit and integration tests
-- `examples/`: Sample LaTeX and BibTeX files for testing
+- `src/`: Application source
+- `src/components/`: React UI components
+- `src/services/`: NLP, parsing, scoring, and API services
+- `src/utils/`: Shared utilities
+- `tests/`: Unit, integration, and e2e tests
+- `examples/`: Sample LaTeX and BibTeX files
 
 ## License
 
-[Add License Here]
+MIT

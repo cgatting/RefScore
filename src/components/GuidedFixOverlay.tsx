@@ -32,6 +32,9 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
   const [manualOpen, setManualOpen] = useState(false);
   const [manualText, setManualText] = useState('');
 
+  const [fixPlan, setFixPlan] = useState<FixAction[]>([]);
+  const [loadingPlan, setLoadingPlan] = useState(false);
+
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => setNotification(null), 3000);
@@ -40,9 +43,13 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
   }, [notification]);
   
   // Re-generate plan when result changes (or initial load)
-  const fixPlan = useMemo(() => {
-    if (!result) return [];
-    return new GuidedFixService().generateFixPlan(result);
+  useEffect(() => {
+    if (!result) return;
+    setLoadingPlan(true);
+    new GuidedFixService().generateFixPlan(result).then(plan => {
+      setFixPlan(plan);
+      setLoadingPlan(false);
+    });
   }, [result]);
 
   const currentAction = fixPlan[currentFixIndex];
@@ -54,6 +61,18 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
   }, [manuscriptText, bibliographyText]);
 
   if (!isOpen) return null;
+
+  if (loadingPlan) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl max-w-md text-center shadow-2xl">
+          <Icons.RefreshCw className="w-8 h-8 text-brand-400 animate-spin mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-white mb-2">Analyzing Fixes...</h3>
+          <p className="text-slate-400">Searching for better sources and generating fix plan.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (fixPlan.length === 0) {
     return (
@@ -131,93 +150,127 @@ export const GuidedFixOverlay: React.FC<GuidedFixOverlayProps> = ({
   const handleSuggestionSelect = (ref: ProcessedReference) => {
     setIsApplying(true);
     try {
-      setHistory(prev => [...prev, { text: currentText, bib: currentBib, description: `Added citation: ${ref.id}` }]);
-      
-      const originalSentence = result.analyzedSentences[currentAction.sentenceIndex].text;
       const finder = new CitationFinderService();
-      
-      const update = finder.autoAddForGap(
-        originalSentence,
-        result.analyzedSentences[currentAction.sentenceIndex].triggerPhrase,
-        ref,
-        currentText,
-        currentBib
-      );
+      let update;
+
+      if (currentAction.type === 'low_relevance' && currentAction.citationKey) {
+          setHistory(prev => [...prev, { text: currentText, bib: currentBib, description: `Replaced citation ${currentAction.citationKey} with ${ref.id}` }]);
+          update = finder.updateFiles(currentAction.citationKey, ref, currentText, currentBib);
+      } else {
+          setHistory(prev => [...prev, { text: currentText, bib: currentBib, description: `Added citation: ${ref.id}` }]);
+          const originalSentence = result.analyzedSentences[currentAction.sentenceIndex].text;
+          update = finder.autoAddForGap(
+            originalSentence,
+            result.analyzedSentences[currentAction.sentenceIndex].triggerPhrase,
+            ref,
+            currentText,
+            currentBib
+          );
+      }
 
       setCurrentText(update.manuscript);
       setCurrentBib(update.bib);
       onUpdate(update.manuscript, update.bib);
       
-      setNotification(`Added citation ${ref.id}`);
+      setNotification(currentAction.type === 'low_relevance' ? `Replaced with ${ref.id}` : `Added citation ${ref.id}`);
       setCurrentFixIndex(prev => prev + 1);
     } catch (e) {
       console.error(e);
-      setNotification("Failed to add citation");
+      setNotification("Failed to apply citation");
     } finally {
       setIsApplying(false);
     }
   };
 
-  const handleApplyAll = () => {
-    // 1. Save history
+  const handleApplyAll = async () => {
+    setIsApplying(true);
     setHistory(prev => [...prev, { text: currentText, bib: currentBib, description: "Batch applied all remaining fixes" }]);
 
     let newText = currentText;
+    let newBib = currentBib;
     let appliedCount = 0;
 
-    // 2. Get all remaining auto-fixable actions
-    // Skip actions that have suggestions to force manual review? 
-    // Or just apply the placeholder as fallback? 
-    // Let's stick to existing behavior: apply placeholder if user clicks Apply All.
-    const remainingActions = fixPlan.slice(currentFixIndex).filter(a => a.autoFixAvailable && a.apply);
+    // Get all remaining auto-fixable actions
+    const remainingActions = fixPlan.slice(currentFixIndex).filter(a => a.autoFixAvailable);
     
-    // Group by sentence index to handle multiple fixes per sentence
-    const actionsBySentence = new Map<number, FixAction[]>();
-    remainingActions.forEach(action => {
-        const list = actionsBySentence.get(action.sentenceIndex) || [];
-        list.push(action);
-        actionsBySentence.set(action.sentenceIndex, list);
-    });
+    // Process complex fixes first (those needing citations)
+    // Then simple string replacements
+    const finder = new CitationFinderService();
 
-    // Process each sentence
-    actionsBySentence.forEach((actions, sentenceIndex) => {
-        const originalSentence = result.analyzedSentences[sentenceIndex].text;
+    try {
+      for (const action of remainingActions) {
+        const originalSentence = result.analyzedSentences[action.sentenceIndex].text;
         
-        // If the original sentence is found in the text
-        if (newText.includes(originalSentence)) {
-            let fixedSentence = originalSentence;
-            actions.forEach(action => {
-                if (action.apply) {
-                    fixedSentence = action.apply(fixedSentence);
+        // Ensure we are working on the latest text state
+        if (!newText.includes(originalSentence)) {
+          // If strict match fails, try fuzzy match or skip
+          // For batch apply, we skip if we can't reliably find the sentence
+          continue;
+        }
+
+        // Case 1: Missing Citation or Gap with Suggestions
+        if ((action.type === 'missing_citation' || action.type === 'gap') && action.suggestedReferences && action.suggestedReferences.length > 0) {
+           const bestRef = action.suggestedReferences[0]; // Take top suggestion
+           
+           try {
+             const update = finder.autoAddForGap(
+               originalSentence,
+               result.analyzedSentences[action.sentenceIndex].triggerPhrase,
+               bestRef,
+               newText,
+               newBib
+             );
+             
+             if (update.manuscript !== newText) {
+               newText = update.manuscript;
+               newBib = update.bib;
+               appliedCount++;
+             }
+           } catch (e) {
+             console.warn(`Failed to auto-apply citation for action ${action.id}`, e);
+           }
+        } 
+        // Case 2: Low Relevance (NEW)
+        else if (action.type === 'low_relevance' && action.citationKey && action.suggestedReferences && action.suggestedReferences.length > 0) {
+            const bestRef = action.suggestedReferences[0];
+            try {
+                const update = finder.updateFiles(action.citationKey, bestRef, newText, newBib);
+                if (update.manuscript !== newText) {
+                    newText = update.manuscript;
+                    newBib = update.bib;
+                    appliedCount++;
                 }
-            });
-            
-            // Only replace if changes were made
-            if (fixedSentence !== originalSentence) {
-                newText = newText.replace(originalSentence, fixedSentence);
-                appliedCount += actions.length;
+            } catch (e) {
+                console.warn(`Failed to auto-replace citation for action ${action.id}`, e);
             }
         }
-    });
-
-    if (appliedCount > 0) {
-        // 3. Update state
-        setCurrentText(newText);
-        onUpdate(newText, currentBib);
-        setNotification(`Applied ${appliedCount} fixes successfully`);
-        
-        // 4. Advance index
-        // Find next non-autofixable item
-        const nextManualIndex = fixPlan.findIndex((action, i) => i >= currentFixIndex && !action.autoFixAvailable);
-        
-        if (nextManualIndex !== -1) {
-            setCurrentFixIndex(nextManualIndex);
-        } else {
-            // All done
-            setCurrentFixIndex(fixPlan.length);
+        // Case 3: Simple Text Replacement (Formatting, etc.)
+        else if (action.apply) {
+           const fixedSentence = action.apply(originalSentence);
+           if (fixedSentence !== originalSentence) {
+             newText = newText.replace(originalSentence, fixedSentence);
+             appliedCount++;
+           }
         }
-    } else {
-        setNotification("No remaining auto-fixes available.");
+      }
+
+      if (appliedCount > 0) {
+          setCurrentText(newText);
+          setCurrentBib(newBib);
+          onUpdate(newText, newBib);
+          setNotification(`Applied ${appliedCount} fixes automatically`);
+          
+          // Move to end or next manual action
+          const nextManualIndex = fixPlan.findIndex((action, i) => i >= currentFixIndex && !action.autoFixAvailable);
+          setCurrentFixIndex(nextManualIndex !== -1 ? nextManualIndex : fixPlan.length);
+      } else {
+          setNotification("No remaining auto-fixes could be applied.");
+      }
+    } catch (error) {
+      console.error("Batch apply failed", error);
+      setNotification("Batch apply encountered an error.");
+    } finally {
+      setIsApplying(false);
     }
   };
 
