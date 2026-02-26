@@ -38,6 +38,15 @@ export interface AnalyzedSentence {
   suggestedReferences?: ProcessedReference[];
 }
 
+export interface PrismaFlowData {
+  totalIdentified: number;
+  uncitedExcluded: number;
+  screened: number;
+  lowRelevanceExcluded: number;
+  outdatedExcluded: number;
+  finalIncluded: number;
+}
+
 export interface AnalysisResult {
   overallScore: number;
   analyzedSentences: AnalyzedSentence[];
@@ -46,6 +55,7 @@ export interface AnalysisResult {
   documentTitle?: string;
   dimensionScores: DimensionScores;
   gaps: string[];
+  prismaData?: PrismaFlowData;
 }
 
 export enum AppState {
