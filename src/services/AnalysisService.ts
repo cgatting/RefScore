@@ -287,6 +287,36 @@ export class AnalysisService {
         avgDimensions.Authority = avgDimensions.Authority / count;
     }
 
+    // 10. Calculate PRISMA Flow Data
+    const totalIdentified = references.length;
+    const citedKeysSet = new Set(analyzedSentences.flatMap(s => s.citations || []));
+    const uncitedExcluded = totalIdentified - citedKeysSet.size;
+    const screened = citedKeysSet.size;
+    
+    let lowRelevanceExcluded = 0;
+    let outdatedExcluded = 0;
+    
+    const validReferences = Object.values(processedReferences).filter(ref => citedKeysSet.has(ref.id));
+    validReferences.forEach(ref => {
+      const avgScore = ref.scores ? this.scoringEngine.computeWeightedTotal(ref.scores) : 0;
+      if (avgScore < 30) {
+        lowRelevanceExcluded++;
+      } else if (ref.scores && ref.scores.Recency < 30) {
+        outdatedExcluded++;
+      }
+    });
+
+    const finalIncluded = screened - lowRelevanceExcluded - outdatedExcluded;
+
+    const prismaData = {
+      totalIdentified,
+      uncitedExcluded,
+      screened,
+      lowRelevanceExcluded,
+      outdatedExcluded,
+      finalIncluded
+    };
+
     return {
       overallScore: finalScore,
       analyzedSentences,
@@ -294,7 +324,8 @@ export class AnalysisService {
       summary,
       documentTitle,
       dimensionScores: avgDimensions,
-      gaps
+      gaps,
+      prismaData
     };
   }
 
