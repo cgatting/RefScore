@@ -175,12 +175,13 @@ export class AnalysisService {
       sentence.isMissingCitation = !!missingCitationTrigger;
       sentence.isHighImpact = !!highImpactTrigger;
       sentence.gapIdentified = !!gapTrigger;
-      sentence.triggerPhrase = missingCitationTrigger || highImpactTrigger || gapTrigger || undefined;
+      
+      // Prioritize Gap or Missing Citation for the trigger phrase to match the UI sections better
+      sentence.triggerPhrase = gapTrigger || missingCitationTrigger || highImpactTrigger || undefined;
       sentence.analysisNotes = [];
 
       if (missingCitationTrigger) {
         sentence.analysisNotes.push(`Flagged as a claim requiring evidence due to the phrase "${missingCitationTrigger}".`);
-        sentence.analysisNotes.push("Consider adding a citation or clarifying if this is your own finding.");
         
         // Smart Gap Filling: Suggest papers
         const suggestions = await this.citationFinder.findSourcesForGap(sentence.text);
@@ -189,7 +190,7 @@ export class AnalysisService {
             sentence.analysisNotes.push(`Found ${suggestions.length} potential sources to support this claim.`);
         }
       }
-      if (highImpactTrigger) {
+      if (highImpactTrigger && !gapTrigger) {
         sentence.analysisNotes.push(`High-impact statement detected via "${highImpactTrigger}".`);
       }
       if (gapTrigger) {
@@ -318,9 +319,9 @@ export class AnalysisService {
 
   private detectHighImpact(sentence: AnalyzedSentence): string | null {
     const impactMarkers = [
-      "significant", "novel", "critical", "breakthrough", "key finding", 
-      "important", "essential", "major contribution", "first time",
-      "demonstrates for the first time", "crucial", "fundamental"
+      "significant breakthrough", "novel approach", "major contribution", 
+      "first time", "demonstrates for the first time", "fundamental shift",
+      "pioneering work", "groundbreaking"
     ];
 
     const lowerText = sentence.text.toLowerCase();
@@ -329,10 +330,14 @@ export class AnalysisService {
   }
 
   private detectGap(sentence: AnalyzedSentence): string | null {
+    // Only mark as gap if the sentence lacks a citation AND has a gap marker
+    if (sentence.citations && sentence.citations.length > 0) return null;
+
     const gapMarkers = [
-      "unknown", "unclear", "limited", "lack of", "remains to be", 
-      "future work", "little is known", "not well understood",
-      "gap in the literature", "needs further", "unresolved"
+      "remains unknown", "unclear whether", "limited research exists", 
+      "lack of existing", "remains to be explored", "future work should", 
+      "little is known about", "not well understood in", "gap in the literature", 
+      "needs further study", "unresolved question"
     ];
 
     const lowerText = sentence.text.toLowerCase();

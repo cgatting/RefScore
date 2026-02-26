@@ -24,3 +24,10 @@ dist-ssr
 *.sw?
 __pycache__/
 *.pyc
+
+# Test and coverage outputs
+artifacts/
+coverage/
+playwright-report/
+test-results/
+.pytest_cache/

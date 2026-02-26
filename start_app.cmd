@@ -29,9 +29,9 @@ if errorlevel 1 (
   python -c "import nltk; nltk.download('punkt', quiet=True); nltk.download('punkt_tab', quiet=True); nltk.download('stopwords', quiet=True)"
 )
 
-if exist "deepsearch_api.py" (
+if exist "backend\deepsearch_api.py" (
   echo [INFO] Starting DeepSearch API at http://127.0.0.1:8000
-  start "DeepSearch API" cmd /k "set CLICK_DISABLE_ARG_EXPANSION=1 && set REFSCORE_SERVE_DIST=0 && set REFSCORE_PRELOAD_NLP=0 && .venv\Scripts\activate && uvicorn deepsearch_api:app --host 127.0.0.1 --port 8000 --reload --reload-dir %CD% --reload-exclude .venv --reload-exclude node_modules --reload-exclude dist --reload-exclude __pycache__ --reload-exclude tests --reload-exclude artifacts --reload-exclude coverage --reload-exclude test-results --reload-exclude playwright-report"
+  start "DeepSearch API" cmd /k "set CLICK_DISABLE_ARG_EXPANSION=1 && set REFSCORE_SERVE_DIST=0 && set REFSCORE_PRELOAD_NLP=0 && .venv\Scripts\activate && uvicorn backend.deepsearch_api:app --host 127.0.0.1 --port 8000 --reload --reload-dir %CD% --reload-exclude .venv --reload-exclude node_modules --reload-exclude dist --reload-exclude __pycache__ --reload-exclude tests --reload-exclude artifacts --reload-exclude coverage --reload-exclude test-results --reload-exclude playwright-report"
 )
 
 if not exist "node_modules" (
@@ -46,7 +46,7 @@ if not exist "node_modules" (
 
 echo [INFO] Starting development server...
 echo [INFO] The application will be available at http://localhost:3000
-if exist "deepsearch_api.py" echo [INFO] DeepSearch API available at http://127.0.0.1:8000
+if exist "backend\deepsearch_api.py" echo [INFO] DeepSearch API available at http://127.0.0.1:8000
 echo.
 
 call npm run dev

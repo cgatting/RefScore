@@ -39,7 +39,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('stopwords')"
 
 # Copy backend code
-COPY DEEPSEARCH.py deepsearch_api.py ./
+COPY backend/ ./backend/
 
 # Copy built frontend from Stage 1
 COPY --from=frontend-builder /app/dist ./dist
@@ -56,4 +56,4 @@ ENV HOME=/home/user \
 EXPOSE 8000
 
 # Command to run the application
-CMD ["uvicorn", "deepsearch_api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "backend.deepsearch_api:app", "--host", "0.0.0.0", "--port", "8000"]

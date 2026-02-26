@@ -16,7 +16,7 @@ import { upsertAndSortBibTexEntries, splitBibTexFile } from './services/parsers/
 import { CitationFinderService } from './services/CitationFinderService';
 
 function App() {
-  const logoUrl = new URL('../logo.png', import.meta.url).href;
+  const logoUrl = '/logo.png';
   const [showLanding, setShowLanding] = useState(true);
   const [appState, setAppState] = useState<AppState>(AppState.IDLE);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'document' | 'bibliography'>('dashboard');
@@ -147,23 +147,22 @@ function App() {
     setManuscriptText(newManuscript);
     setBibliographyText(newBib);
     
-    // Trigger re-analysis
-    setAppState(AppState.PARSING);
+    // We don't set appState to PARSING here to avoid unmounting the UI/Overlays
+    // Instead, the child components can show their own loading states
     setStatusMessage("Re-analyzing updated content...");
     
-    setTimeout(async () => {
-        try {
-            const service = new AnalysisService(scoringConfig);
-            const analysisResult = await service.analyze(newManuscript, newBib);
-            
-            setResult(analysisResult);
-            setAppState(AppState.RESULTS);
-        } catch (err: any) {
-            console.error(err);
-            setAppState(AppState.ERROR);
-            setErrorMsg(err.message || "Update failed.");
-        }
-    }, 1000);
+    try {
+        const service = new AnalysisService(scoringConfig);
+        const analysisResult = await service.analyze(newManuscript, newBib);
+        
+        setResult(analysisResult);
+        // Ensure we are in RESULTS mode (we should already be)
+        setAppState(AppState.RESULTS);
+    } catch (err: any) {
+        console.error(err);
+        setAppState(AppState.ERROR);
+        setErrorMsg(err.message || "Update failed.");
+    }
   };
 
   if (showLanding) {

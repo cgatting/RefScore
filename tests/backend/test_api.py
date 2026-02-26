@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 # Import app from deepsearch_api
 # Note: we assume conftest.py mocks are applied before this if run via pytest
-from deepsearch_api import app
+from backend.deepsearch_api import app
 
 client = TestClient(app)
 
