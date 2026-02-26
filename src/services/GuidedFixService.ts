@@ -27,18 +27,28 @@ export class GuidedFixService {
     await Promise.all(result.analyzedSentences.map(async (sentence, index) => {
       // 1. Check for Missing Citations
       if (sentence.isMissingCitation) {
+        let suggestions = sentence.suggestedReferences || [];
+        if (suggestions.length === 0) {
+            try {
+                suggestions = await this.citationFinder.findSourcesForGap(sentence.text);
+            } catch (e) {
+                console.warn(`Failed to find gap sources for missing citation at index ${index}`, e);
+            }
+        }
+
+        const hasSuggestions = suggestions.length > 0;
         actions.push({
           id: `fix-missing-${index}`,
           sentenceIndex: index,
           type: 'missing_citation',
           severity: 'high',
           description: `Sentence contains a claim ("${sentence.triggerPhrase || 'suggests'}") but lacks a citation.`,
-          suggestion: sentence.suggestedReferences && sentence.suggestedReferences.length > 0 
-            ? 'Select a suggested source or add a placeholder.' 
+          suggestion: hasSuggestions 
+            ? `Auto-add best matching source: "${suggestions[0].title.substring(0, 40)}..."`
             : 'Add a citation placeholder to support this claim.',
           autoFixAvailable: true, 
           apply: (text) => `${text} [CITATION NEEDED]`,
-          suggestedReferences: sentence.suggestedReferences,
+          suggestedReferences: suggestions,
         });
       }
 
@@ -58,15 +68,16 @@ export class GuidedFixService {
               }
             }
 
+            const hasSuggestions = suggestions.length > 0;
             actions.push({
               id: `fix-low-rel-${index}-${citKey}`,
               sentenceIndex: index,
               type: 'low_relevance',
               severity: 'medium',
               description: `Citation [${citKey}] has low relevance alignment (${Math.round(scores.Alignment * 100)}%).`,
-              suggestion: suggestions.length > 0 
-                ? 'Replace with a better aligned source.' 
-                : 'Mark for review with a placeholder.',
+              suggestion: hasSuggestions 
+                ? `Replace with high-relevance source: "${suggestions[0].title.substring(0, 40)}..."`
+                : 'Mark for review with a relevance placeholder.',
               autoFixAvailable: true,
               apply: (text) => `${text} [RELEVANCE CHECK: ${citKey}]`,
               suggestedReferences: suggestions,
@@ -80,7 +91,7 @@ export class GuidedFixService {
               type: 'outdated',
               severity: 'low',
               description: `Citation [${citKey}] is significantly older than the field average.`,
-              suggestion: 'Mark for update with a placeholder.',
+              suggestion: 'Add a recency reminder placeholder.',
               autoFixAvailable: true,
               apply: (text) => `${text} [UPDATE NEEDED: ${citKey}]`,
             }); 
@@ -90,18 +101,28 @@ export class GuidedFixService {
 
       // 4. Check for Identified Gaps
       if (sentence.gapIdentified) {
+        let suggestions = sentence.suggestedReferences || [];
+        if (suggestions.length === 0) {
+            try {
+                suggestions = await this.citationFinder.findSourcesForGap(sentence.text);
+            } catch (e) {
+                console.warn(`Failed to find gap sources at index ${index}`, e);
+            }
+        }
+
+        const hasSuggestions = suggestions.length > 0;
         actions.push({
           id: `fix-gap-${index}`,
           sentenceIndex: index,
           type: 'gap',
           severity: 'medium',
           description: 'This sentence identifies a potential research gap.',
-          suggestion: sentence.suggestedReferences && sentence.suggestedReferences.length > 0 
-            ? 'Fill this gap with a suggested paper.' 
-            : 'Highlight this gap for further exploration.',
+          suggestion: hasSuggestions 
+            ? `Fill gap with suggested paper: "${suggestions[0].title.substring(0, 40)}..."` 
+            : 'Highlight this gap with a research placeholder.',
           autoFixAvailable: true,
           apply: (text) => `${text} [RESEARCH GAP]`,
-          suggestedReferences: sentence.suggestedReferences,
+          suggestedReferences: suggestions,
         });
       }
 

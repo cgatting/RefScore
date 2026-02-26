@@ -93,16 +93,24 @@ export class CitationFinderService {
    * Finds papers to fill a detected research gap or missing citation.
    */
   public async findSourcesForGap(contextSentence: string, progress?: (msg: string) => void): Promise<ProcessedReference[]> {
+    const localExclusions = ['sandy', 'cove', 'hotel', 'guestline', 'rezlynx', 'hotelier', 'property', 'management', 'system'];
+    
     // 1. Extract potential search terms
     let keywords = contextSentence
       .split(/\W+/)
-      .filter(w => w.length > 4 && !['however', 'because', 'although', 'studies', 'shown', 'research', 'indicated', 'found', 'results'].includes(w.toLowerCase()))
-      .slice(0, 5)
+      .filter(w => {
+        const lw = w.toLowerCase();
+        return lw.length > 4 && 
+               !['however', 'because', 'although', 'studies', 'shown', 'research', 'indicated', 'found', 'results', 'critical'].includes(lw) &&
+               !localExclusions.includes(lw);
+      })
+      .slice(0, 6)
       .join(' ');
 
     // 2. If keywords are weak, try Entity Extractor
     if (!keywords || keywords.length < 5) {
-        const entities = this.entityExtractor.extract(contextSentence);
+        const entities = this.entityExtractor.extract(contextSentence)
+            .filter(e => !localExclusions.includes(e.toLowerCase()));
         if (entities.length > 0) {
             keywords = entities.join(' ');
         }

@@ -16,7 +16,7 @@ sys.modules["nltk"] = MagicMock()
 import os
 os.environ["REFSCORE_SERVE_DIST"] = "0"
 
-from deepsearch_api import app
+from backend.deepsearch_api import app
 
 @pytest.fixture
 def client():
@@ -43,8 +43,8 @@ def mock_deepsearch_components(monkeypatch):
 
     # Patch the classes in deepsearch_api module directly
     # Note: We need to patch where they are USED, not just where they are defined
-    monkeypatch.setattr("deepsearch_api.NLPProcessor", lambda *args, **kwargs: mock_nlp)
-    monkeypatch.setattr("deepsearch_api.DocumentRefiner", lambda *args, **kwargs: mock_refiner)
+    monkeypatch.setattr("backend.deepsearch_api.NLPProcessor", lambda *args, **kwargs: mock_nlp)
+    monkeypatch.setattr("backend.deepsearch_api.DocumentRefiner", lambda *args, **kwargs: mock_refiner)
     
     # Also patch get_refiner to return our mock if it's called directly
     # But since the endpoint calls get_refiner, and get_refiner instantiates DocumentRefiner,
@@ -52,8 +52,8 @@ def mock_deepsearch_components(monkeypatch):
     # However, get_refiner is defined in deepsearch_api.py, so we can patch it too for safety.
     def mock_get_refiner(settings=None):
         return mock_refiner
-    monkeypatch.setattr("deepsearch_api.get_refiner", mock_get_refiner)
+    monkeypatch.setattr("backend.deepsearch_api.get_refiner", mock_get_refiner)
     
     # Patch the global nlp_processor in deepsearch_api
-    monkeypatch.setattr("deepsearch_api.nlp_processor", mock_nlp)
+    monkeypatch.setattr("backend.deepsearch_api.nlp_processor", mock_nlp)
 

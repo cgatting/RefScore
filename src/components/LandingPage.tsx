@@ -23,7 +23,7 @@ interface LandingPageProps {
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
-  const logoUrl = new URL('../../logo.png', import.meta.url).href;
+  const logoUrl = '/logo.png';
   const [isMathOpen, setIsMathOpen] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
 
