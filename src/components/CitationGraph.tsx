@@ -1,5 +1,7 @@
-import React, { useMemo, useEffect, useRef, useState } from 'react';
-import ForceGraph2D from 'react-force-graph-2d';
+import React, { useMemo, useEffect, useRef, useState, Suspense } from 'react';
+
+// Dynamically import ForceGraph2D to avoid issues with SSR or strict module loading
+const ForceGraph2D = React.lazy(() => import('react-force-graph-2d'));
 import { ProcessedReference } from '../types';
 
 interface CitationGraphProps {
@@ -80,19 +82,21 @@ export const CitationGraph: React.FC<CitationGraphProps> = ({ references }) => {
       <div className="absolute top-4 left-4 z-10 bg-slate-800/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 font-medium">
         Citation Network ({graphData.nodes.length} nodes, {graphData.links.length} links)
       </div>
-      <ForceGraph2D
-        width={dimensions.width}
-        height={dimensions.height}
-        graphData={graphData}
-        nodeLabel="name"
-        nodeColor="color"
-        linkColor={() => 'rgba(255, 255, 255, 0.2)'}
-        linkDirectionalArrowLength={3.5}
-        linkDirectionalArrowRelPos={1}
-        nodeRelSize={6}
-        d3VelocityDecay={0.3}
-        backgroundColor="#0f172a" // match slate-900
-      />
+      <Suspense fallback={<div className="flex items-center justify-center h-full text-slate-500">Loading graph...</div>}>
+        <ForceGraph2D
+          width={dimensions.width}
+          height={dimensions.height}
+          graphData={graphData}
+          nodeLabel="name"
+          nodeColor="color"
+          linkColor={() => 'rgba(255, 255, 255, 0.2)'}
+          linkDirectionalArrowLength={3.5}
+          linkDirectionalArrowRelPos={1}
+          nodeRelSize={6}
+          d3VelocityDecay={0.3}
+          backgroundColor="#0f172a" // match slate-900
+        />
+      </Suspense>
     </div>
   );
 };

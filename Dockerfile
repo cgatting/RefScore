@@ -52,7 +52,7 @@ USER user
 ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH
 
-# Expose port 7860 for Hugging Face Spaces
+# Expose port 7860
 EXPOSE 7860
 
 # Command to run the application
