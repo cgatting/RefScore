@@ -14,7 +14,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:backend": "python -m pytest tests/backend"
+    "test:backend": "python -m pytest tests/backend",
+    "validate:semantic": "npx tsx tests/evaluation/run_validation.ts"
   },
   "dependencies": {
     "html2canvas": "^1.4.1",
@@ -22,6 +23,7 @@
     "lucide-react": "^0.563.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-force-graph-2d": "^1.29.1",
     "recharts": "^3.7.0"
   },
   "devDependencies": {
@@ -35,8 +37,11 @@
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/coverage-v8": "^4.0.18",
     "autoprefixer": "^10.4.24",
+    "axios": "^1.13.6",
+    "csv-parser": "^3.2.0",
     "jsdom": "^28.0.0",
     "postcss": "^8.5.6",
+    "puppeteer": "^24.37.5",
     "tailwindcss": "^4.1.18",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",

@@ -1,0 +1,470 @@
+[
+  {
+    "id": "1_0_0_0_copy0",
+    "sentence": "Automotive workshop diagnosis increasingly involves heterogeneous evidence (DTCs, freeze-frame context, scan-tool/CAN time-series, and service text) and remains uncertain because codes are often symptom-level and intermittent faults may set no codes.",
+    "reference": {
+      "id": "SAEJ1979",
+      "title": "SAE J1979: E/E Diagnostic Test Modes",
+      "abstract": "SAE J1979: E/E Diagnostic Test Modes. SAE International. 2025. This standard defines a set of diagnostic test modes, a format for emissions-related DTCs, monitor/readiness status, and a baseline set of parameter IDs (PIDs) accessible to generic scan tools.",
+      "year": 2025,
+      "authors": [
+        "SAE International"
+      ]
+    },
+    "human_score": 55
+  },
+  {
+    "id": "2_0_0_0_copy0",
+    "sentence": "This paper reviews AI methods for workshop decision support, focusing on root-cause ranking (top-k shortlists), anomaly detection for no-code failures, and text-enabled retrieval from repair records.",
+    "reference": {
+      "id": "Chandola2009",
+      "title": "Anomaly Detection: A Survey",
+      "abstract": "Anomaly detection is an important problem that has been researched within diverse research areas and application domains. Many anomaly detection techniques have been specifically developed for certain application domains, while others are more generic. This survey tries to provide a structured and comprehensive overview of the research on anomaly detection.",
+      "year": 2009,
+      "authors": [
+        "Chandola, Varun",
+        "Banerjee, Arindam",
+        "Kumar, Vipin"
+      ]
+    },
+    "human_score": 94
+  },
+  {
+    "id": "3_0_0_0_copy0",
+    "sentence": "We summarise pipelines and highlight constraints that dominate performance: noisy repair labels, class imbalance, vehicle-variant shift, missing/irregular signals, and the need for calibrated uncertainty and explanations.",
+    "reference": {
+      "id": "Molnar2022",
+      "title": "Interpretable Machine Learning",
+      "abstract": "Machine learning has great potential for improving products, processes and research. But computers usually do not explain their predictions which is a barrier to the adoption of machine learning. This book is about making machine learning models and their decisions interpretable.",
+      "year": 2022,
+      "authors": [
+        "Molnar, Christoph"
+      ]
+    },
+    "human_score": 80
+  },
+  {
+    "id": "4_0_0_0_copy0",
+    "sentence": "Recurrent networks such as LSTMs are a standard approach for temporal dependencies.",
+    "reference": {
+      "id": "Hochreiter1997",
+      "title": "Long Short-Term Memory",
+      "abstract": "Learning to store information over extended time intervals by recurrent backpropagation takes a very long time, mostly because of insufficient, decaying error backflow. We propose a novel, efficient, gradient-based method called 'Long Short-Term Memory' (LSTM). LSTM can learn to bridge time intervals in excess of 1000 steps even in case of noisy, incompressible input sequences.",
+      "year": 1997,
+      "authors": [
+        "Hochreiter, Sepp",
+        "Schmidhuber, Jurgen"
+      ]
+    },
+    "human_score": 37
+  },
+  {
+    "id": "5_0_0_0_copy0",
+    "sentence": "While attention-based encoders generalise to variable-length sequences and support flexible aggregation.",
+    "reference": {
+      "id": "Vaswani2017",
+      "title": "Attention Is All You Need",
+      "abstract": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely.",
+      "year": 2017,
+      "authors": [
+        "Vaswani, Ashish",
+        "Shazeer, Noam",
+        "Parmar, Niki"
+      ]
+    },
+    "human_score": 62
+  },
+  {
+    "id": "6_0_0_0_copy0",
+    "sentence": "Automotive workshop diagnosis increasingly involves heterogeneous evidence (DTCs, freeze-frame context, scan-tool/CAN time-series, and service text).",
+    "reference": {
+      "id": "Vaswani2017_Bad",
+      "title": "Attention Is All You Need",
+      "abstract": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also connect the encoder and decoder through an attention mechanism.",
+      "year": 2017,
+      "authors": [
+        "Vaswani, Ashish"
+      ]
+    },
+    "human_score": 16
+  },
+  {
+    "id": "7_0_0_0_copy0",
+    "sentence": "Modern vehicles are distributed cyber-physical systems with many ECUs, sensors, and networked subsystems.",
+    "reference": {
+      "id": "Manning2008_Bad",
+      "title": "Introduction to Information Retrieval",
+      "abstract": "Class-tested and coherent, this textbook teaches classical and web information retrieval, including web search and the related areas of text classification and text clustering.",
+      "year": 2008,
+      "authors": [
+        "Manning, Christopher D."
+      ]
+    },
+    "human_score": 59
+  },
+  {
+    "id": "8_0_0_0_copy0",
+    "sentence": "A crucial design choice is the definition of a case.",
+    "reference": {
+      "id": "Pearl2009_Weak",
+      "title": "Causality: Models, Reasoning, and Inference",
+      "abstract": "Causality offers the first comprehensive coverage of causal analysis in many sciences... Written by one of the preeminent researchers in the field, this book provides a unified account of the probabilistic, manipulative, counterfactual and structural approaches to causation.",
+      "year": 2009,
+      "authors": [
+        "Pearl, Judea"
+      ]
+    },
+    "human_score": 83
+  },
+  {
+    "id": "1_0_0_0_copy1",
+    "sentence": "Automotive workshop diagnosis increasingly involves heterogeneous evidence (DTCs, freeze-frame context, scan-tool/CAN time-series, and service text) and remains uncertain because codes are often symptom-level and intermittent faults may set no codes.",
+    "reference": {
+      "id": "SAEJ1979",
+      "title": "SAE J1979: E/E Diagnostic Test Modes",
+      "abstract": "SAE J1979: E/E Diagnostic Test Modes. SAE International. 2025. This standard defines a set of diagnostic test modes, a format for emissions-related DTCs, monitor/readiness status, and a baseline set of parameter IDs (PIDs) accessible to generic scan tools.",
+      "year": 2025,
+      "authors": [
+        "SAE International"
+      ]
+    },
+    "human_score": 80
+  },
+  {
+    "id": "2_0_0_0_copy1",
+    "sentence": "This paper reviews AI methods for workshop decision support, focusing on root-cause ranking (top-k shortlists), anomaly detection for no-code failures, and text-enabled retrieval from repair records.",
+    "reference": {
+      "id": "Chandola2009",
+      "title": "Anomaly Detection: A Survey",
+      "abstract": "Anomaly detection is an important problem that has been researched within diverse research areas and application domains. Many anomaly detection techniques have been specifically developed for certain application domains, while others are more generic. This survey tries to provide a structured and comprehensive overview of the research on anomaly detection.",
+      "year": 2009,
+      "authors": [
+        "Chandola, Varun",
+        "Banerjee, Arindam",
+        "Kumar, Vipin"
+      ]
+    },
+    "human_score": 100
+  },
+  {
+    "id": "3_0_0_0_copy1",
+    "sentence": "We summarise pipelines and highlight constraints that dominate performance: noisy repair labels, class imbalance, vehicle-variant shift, missing/irregular signals, and the need for calibrated uncertainty and explanations.",
+    "reference": {
+      "id": "Molnar2022",
+      "title": "Interpretable Machine Learning",
+      "abstract": "Machine learning has great potential for improving products, processes and research. But computers usually do not explain their predictions which is a barrier to the adoption of machine learning. This book is about making machine learning models and their decisions interpretable.",
+      "year": 2022,
+      "authors": [
+        "Molnar, Christoph"
+      ]
+    },
+    "human_score": 63
+  },
+  {
+    "id": "4_0_0_0_copy1",
+    "sentence": "Recurrent networks such as LSTMs are a standard approach for temporal dependencies.",
+    "reference": {
+      "id": "Hochreiter1997",
+      "title": "Long Short-Term Memory",
+      "abstract": "Learning to store information over extended time intervals by recurrent backpropagation takes a very long time, mostly because of insufficient, decaying error backflow. We propose a novel, efficient, gradient-based method called 'Long Short-Term Memory' (LSTM). LSTM can learn to bridge time intervals in excess of 1000 steps even in case of noisy, incompressible input sequences.",
+      "year": 1997,
+      "authors": [
+        "Hochreiter, Sepp",
+        "Schmidhuber, Jurgen"
+      ]
+    },
+    "human_score": 37
+  },
+  {
+    "id": "5_0_0_0_copy1",
+    "sentence": "While attention-based encoders generalise to variable-length sequences and support flexible aggregation.",
+    "reference": {
+      "id": "Vaswani2017",
+      "title": "Attention Is All You Need",
+      "abstract": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely.",
+      "year": 2017,
+      "authors": [
+        "Vaswani, Ashish",
+        "Shazeer, Noam",
+        "Parmar, Niki"
+      ]
+    },
+    "human_score": 55
+  },
+  {
+    "id": "6_0_0_0_copy1",
+    "sentence": "Automotive workshop diagnosis increasingly involves heterogeneous evidence (DTCs, freeze-frame context, scan-tool/CAN time-series, and service text).",
+    "reference": {
+      "id": "Vaswani2017_Bad",
+      "title": "Attention Is All You Need",
+      "abstract": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also connect the encoder and decoder through an attention mechanism.",
+      "year": 2017,
+      "authors": [
+        "Vaswani, Ashish"
+      ]
+    },
+    "human_score": 17
+  },
+  {
+    "id": "7_0_0_0_copy1",
+    "sentence": "Modern vehicles are distributed cyber-physical systems with many ECUs, sensors, and networked subsystems.",
+    "reference": {
+      "id": "Manning2008_Bad",
+      "title": "Introduction to Information Retrieval",
+      "abstract": "Class-tested and coherent, this textbook teaches classical and web information retrieval, including web search and the related areas of text classification and text clustering.",
+      "year": 2008,
+      "authors": [
+        "Manning, Christopher D."
+      ]
+    },
+    "human_score": 64
+  },
+  {
+    "id": "8_0_0_0_copy1",
+    "sentence": "A crucial design choice is the definition of a case.",
+    "reference": {
+      "id": "Pearl2009_Weak",
+      "title": "Causality: Models, Reasoning, and Inference",
+      "abstract": "Causality offers the first comprehensive coverage of causal analysis in many sciences... Written by one of the preeminent researchers in the field, this book provides a unified account of the probabilistic, manipulative, counterfactual and structural approaches to causation.",
+      "year": 2009,
+      "authors": [
+        "Pearl, Judea"
+      ]
+    },
+    "human_score": 77
+  },
+  {
+    "id": "1_0_0_0_copy2",
+    "sentence": "Automotive workshop diagnosis increasingly involves heterogeneous evidence (DTCs, freeze-frame context, scan-tool/CAN time-series, and service text) and remains uncertain because codes are often symptom-level and intermittent faults may set no codes.",
+    "reference": {
+      "id": "SAEJ1979",
+      "title": "SAE J1979: E/E Diagnostic Test Modes",
+      "abstract": "SAE J1979: E/E Diagnostic Test Modes. SAE International. 2025. This standard defines a set of diagnostic test modes, a format for emissions-related DTCs, monitor/readiness status, and a baseline set of parameter IDs (PIDs) accessible to generic scan tools.",
+      "year": 2025,
+      "authors": [
+        "SAE International"
+      ]
+    },
+    "human_score": 100
+  },
+  {
+    "id": "2_0_0_0_copy2",
+    "sentence": "This paper reviews AI methods for workshop decision support, focusing on root-cause ranking (top-k shortlists), anomaly detection for no-code failures, and text-enabled retrieval from repair records.",
+    "reference": {
+      "id": "Chandola2009",
+      "title": "Anomaly Detection: A Survey",
+      "abstract": "Anomaly detection is an important problem that has been researched within diverse research areas and application domains. Many anomaly detection techniques have been specifically developed for certain application domains, while others are more generic. This survey tries to provide a structured and comprehensive overview of the research on anomaly detection.",
+      "year": 2009,
+      "authors": [
+        "Chandola, Varun",
+        "Banerjee, Arindam",
+        "Kumar, Vipin"
+      ]
+    },
+    "human_score": 79
+  },
+  {
+    "id": "3_0_0_0_copy2",
+    "sentence": "We summarise pipelines and highlight constraints that dominate performance: noisy repair labels, class imbalance, vehicle-variant shift, missing/irregular signals, and the need for calibrated uncertainty and explanations.",
+    "reference": {
+      "id": "Molnar2022",
+      "title": "Interpretable Machine Learning",
+      "abstract": "Machine learning has great potential for improving products, processes and research. But computers usually do not explain their predictions which is a barrier to the adoption of machine learning. This book is about making machine learning models and their decisions interpretable.",
+      "year": 2022,
+      "authors": [
+        "Molnar, Christoph"
+      ]
+    },
+    "human_score": 71
+  },
+  {
+    "id": "4_0_0_0_copy2",
+    "sentence": "Recurrent networks such as LSTMs are a standard approach for temporal dependencies.",
+    "reference": {
+      "id": "Hochreiter1997",
+      "title": "Long Short-Term Memory",
+      "abstract": "Learning to store information over extended time intervals by recurrent backpropagation takes a very long time, mostly because of insufficient, decaying error backflow. We propose a novel, efficient, gradient-based method called 'Long Short-Term Memory' (LSTM). LSTM can learn to bridge time intervals in excess of 1000 steps even in case of noisy, incompressible input sequences.",
+      "year": 1997,
+      "authors": [
+        "Hochreiter, Sepp",
+        "Schmidhuber, Jurgen"
+      ]
+    },
+    "human_score": 49
+  },
+  {
+    "id": "5_0_0_0_copy2",
+    "sentence": "While attention-based encoders generalise to variable-length sequences and support flexible aggregation.",
+    "reference": {
+      "id": "Vaswani2017",
+      "title": "Attention Is All You Need",
+      "abstract": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely.",
+      "year": 2017,
+      "authors": [
+        "Vaswani, Ashish",
+        "Shazeer, Noam",
+        "Parmar, Niki"
+      ]
+    },
+    "human_score": 49
+  },
+  {
+    "id": "6_0_0_0_copy2",
+    "sentence": "Automotive workshop diagnosis increasingly involves heterogeneous evidence (DTCs, freeze-frame context, scan-tool/CAN time-series, and service text).",
+    "reference": {
+      "id": "Vaswani2017_Bad",
+      "title": "Attention Is All You Need",
+      "abstract": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also connect the encoder and decoder through an attention mechanism.",
+      "year": 2017,
+      "authors": [
+        "Vaswani, Ashish"
+      ]
+    },
+    "human_score": 15
+  },
+  {
+    "id": "7_0_0_0_copy2",
+    "sentence": "Modern vehicles are distributed cyber-physical systems with many ECUs, sensors, and networked subsystems.",
+    "reference": {
+      "id": "Manning2008_Bad",
+      "title": "Introduction to Information Retrieval",
+      "abstract": "Class-tested and coherent, this textbook teaches classical and web information retrieval, including web search and the related areas of text classification and text clustering.",
+      "year": 2008,
+      "authors": [
+        "Manning, Christopher D."
+      ]
+    },
+    "human_score": 14
+  },
+  {
+    "id": "8_0_0_0_copy2",
+    "sentence": "A crucial design choice is the definition of a case.",
+    "reference": {
+      "id": "Pearl2009_Weak",
+      "title": "Causality: Models, Reasoning, and Inference",
+      "abstract": "Causality offers the first comprehensive coverage of causal analysis in many sciences... Written by one of the preeminent researchers in the field, this book provides a unified account of the probabilistic, manipulative, counterfactual and structural approaches to causation.",
+      "year": 2009,
+      "authors": [
+        "Pearl, Judea"
+      ]
+    },
+    "human_score": 74
+  },
+  {
+    "id": "1_0_0_0_copy3",
+    "sentence": "Automotive workshop diagnosis increasingly involves heterogeneous evidence (DTCs, freeze-frame context, scan-tool/CAN time-series, and service text) and remains uncertain because codes are often symptom-level and intermittent faults may set no codes.",
+    "reference": {
+      "id": "SAEJ1979",
+      "title": "SAE J1979: E/E Diagnostic Test Modes",
+      "abstract": "SAE J1979: E/E Diagnostic Test Modes. SAE International. 2025. This standard defines a set of diagnostic test modes, a format for emissions-related DTCs, monitor/readiness status, and a baseline set of parameter IDs (PIDs) accessible to generic scan tools.",
+      "year": 2025,
+      "authors": [
+        "SAE International"
+      ]
+    },
+    "human_score": 100
+  },
+  {
+    "id": "2_0_0_0_copy3",
+    "sentence": "This paper reviews AI methods for workshop decision support, focusing on root-cause ranking (top-k shortlists), anomaly detection for no-code failures, and text-enabled retrieval from repair records.",
+    "reference": {
+      "id": "Chandola2009",
+      "title": "Anomaly Detection: A Survey",
+      "abstract": "Anomaly detection is an important problem that has been researched within diverse research areas and application domains. Many anomaly detection techniques have been specifically developed for certain application domains, while others are more generic. This survey tries to provide a structured and comprehensive overview of the research on anomaly detection.",
+      "year": 2009,
+      "authors": [
+        "Chandola, Varun",
+        "Banerjee, Arindam",
+        "Kumar, Vipin"
+      ]
+    },
+    "human_score": 94
+  },
+  {
+    "id": "3_0_0_0_copy3",
+    "sentence": "We summarise pipelines and highlight constraints that dominate performance: noisy repair labels, class imbalance, vehicle-variant shift, missing/irregular signals, and the need for calibrated uncertainty and explanations.",
+    "reference": {
+      "id": "Molnar2022",
+      "title": "Interpretable Machine Learning",
+      "abstract": "Machine learning has great potential for improving products, processes and research. But computers usually do not explain their predictions which is a barrier to the adoption of machine learning. This book is about making machine learning models and their decisions interpretable.",
+      "year": 2022,
+      "authors": [
+        "Molnar, Christoph"
+      ]
+    },
+    "human_score": 80
+  },
+  {
+    "id": "4_0_0_0_copy3",
+    "sentence": "Recurrent networks such as LSTMs are a standard approach for temporal dependencies.",
+    "reference": {
+      "id": "Hochreiter1997",
+      "title": "Long Short-Term Memory",
+      "abstract": "Learning to store information over extended time intervals by recurrent backpropagation takes a very long time, mostly because of insufficient, decaying error backflow. We propose a novel, efficient, gradient-based method called 'Long Short-Term Memory' (LSTM). LSTM can learn to bridge time intervals in excess of 1000 steps even in case of noisy, incompressible input sequences.",
+      "year": 1997,
+      "authors": [
+        "Hochreiter, Sepp",
+        "Schmidhuber, Jurgen"
+      ]
+    },
+    "human_score": 43
+  },
+  {
+    "id": "5_0_0_0_copy3",
+    "sentence": "While attention-based encoders generalise to variable-length sequences and support flexible aggregation.",
+    "reference": {
+      "id": "Vaswani2017",
+      "title": "Attention Is All You Need",
+      "abstract": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely.",
+      "year": 2017,
+      "authors": [
+        "Vaswani, Ashish",
+        "Shazeer, Noam",
+        "Parmar, Niki"
+      ]
+    },
+    "human_score": 53
+  },
+  {
+    "id": "6_0_0_0_copy3",
+    "sentence": "Automotive workshop diagnosis increasingly involves heterogeneous evidence (DTCs, freeze-frame context, scan-tool/CAN time-series, and service text).",
+    "reference": {
+      "id": "Vaswani2017_Bad",
+      "title": "Attention Is All You Need",
+      "abstract": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also connect the encoder and decoder through an attention mechanism.",
+      "year": 2017,
+      "authors": [
+        "Vaswani, Ashish"
+      ]
+    },
+    "human_score": 26
+  },
+  {
+    "id": "7_0_0_0_copy3",
+    "sentence": "Modern vehicles are distributed cyber-physical systems with many ECUs, sensors, and networked subsystems.",
+    "reference": {
+      "id": "Manning2008_Bad",
+      "title": "Introduction to Information Retrieval",
+      "abstract": "Class-tested and coherent, this textbook teaches classical and web information retrieval, including web search and the related areas of text classification and text clustering.",
+      "year": 2008,
+      "authors": [
+        "Manning, Christopher D."
+      ]
+    },
+    "human_score": 37
+  },
+  {
+    "id": "8_0_0_0_copy3",
+    "sentence": "A crucial design choice is the definition of a case.",
+    "reference": {
+      "id": "Pearl2009_Weak",
+      "title": "Causality: Models, Reasoning, and Inference",
+      "abstract": "Causality offers the first comprehensive coverage of causal analysis in many sciences... Written by one of the preeminent researchers in the field, this book provides a unified account of the probabilistic, manipulative, counterfactual and structural approaches to causation.",
+      "year": 2009,
+      "authors": [
+        "Pearl, Judea"
+      ]
+    },
+    "human_score": 69
+  }
+]

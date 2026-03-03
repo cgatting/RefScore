@@ -59,6 +59,8 @@ export class AnalysisService {
             ref.venue = venue;
           }
           ref.scores = oaScores;
+          ref.openAlexId = oaPaper.id;
+          ref.referencedWorks = oaPaper.referenced_works || [];
           if (oaPaper.cited_by_count !== undefined) {
             ref.citationCount = oaPaper.cited_by_count;
           }

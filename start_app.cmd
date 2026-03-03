@@ -14,7 +14,7 @@ if not exist ".venv\Scripts\activate.bat" (
 
 if not exist ".venv\Scripts\activate.bat" (
   echo [ERROR] Failed to create Python venv.
-  pause
+
   exit /b 1
 )
 
@@ -31,7 +31,7 @@ if errorlevel 1 (
 
 if exist "backend\deepsearch_api.py" (
   echo [INFO] Starting DeepSearch API at http://127.0.0.1:8000
-  start "DeepSearch API" cmd /k "set CLICK_DISABLE_ARG_EXPANSION=1 && set REFSCORE_SERVE_DIST=0 && set REFSCORE_PRELOAD_NLP=0 && .venv\Scripts\activate && uvicorn backend.deepsearch_api:app --host 127.0.0.1 --port 8000 --reload --reload-dir %CD% --reload-exclude .venv --reload-exclude node_modules --reload-exclude dist --reload-exclude __pycache__ --reload-exclude tests --reload-exclude artifacts --reload-exclude coverage --reload-exclude test-results --reload-exclude playwright-report"
+  start "DeepSearch API" cmd /k "set CLICK_DISABLE_ARG_EXPANSION=1 && set REFSCORE_SERVE_DIST=0 && set REFSCORE_PRELOAD_NLP=0 && .venv\Scripts\activate && python -m uvicorn backend.deepsearch_api:app --host 127.0.0.1 --port 8000 --reload --reload-dir %CD% --reload-exclude .venv --reload-exclude node_modules --reload-exclude dist --reload-exclude __pycache__ --reload-exclude tests --reload-exclude artifacts --reload-exclude coverage --reload-exclude test-results --reload-exclude playwright-report"
 )
 
 if not exist "node_modules" (
@@ -39,7 +39,7 @@ if not exist "node_modules" (
   call npm install
   if %errorlevel% neq 0 (
     echo [ERROR] Failed to install Node dependencies.
-    pause
+  
     exit /b %errorlevel%
   )
 )
@@ -53,5 +53,5 @@ call npm run dev
 
 if %errorlevel% neq 0 (
   echo [ERROR] Server stopped unexpectedly.
-  pause
+
 )

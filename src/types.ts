@@ -19,6 +19,8 @@ export interface ProcessedReference {
   embedding?: number[]; // Vector representation
   scores?: DimensionScores;
   relevanceSummary?: string;
+  openAlexId?: string;
+  referencedWorks?: string[];
 }
 
 export interface AnalyzedSentence {

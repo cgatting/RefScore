@@ -61,20 +61,12 @@ export const BibliographyDashboard: React.FC<BibliographyDashboardProps> = ({
   }, [manuscriptText]);
 
   const handleSortBib = () => {
-    // For the "Sort" button, we might still want to sort the *original* full bibliography
-    // or maybe just the valid ones? 
-    // Usually "Sort" implies organizing the user's input. 
-    // But if we are enforcing a filter, maybe we should only keep valid ones?
-    // Let's keep the original behavior for the "Sort" button (sorting the raw text) 
-    // to avoid data loss during simple editing, but the downloads will be filtered.
     const nextBib = sortBibTexEntriesAlphabetically(bibliographyText);
     onUpdate(manuscriptText, nextBib);
     setStatus('Sorted bibliography alphabetically by citation key.');
   };
 
-  const handleDownloadTex = () => {
-    // Identify references that should be removed (Score === 0)
-    // We only care about removing citations for references that exist but have 0 score.
+  const getCleanTex = () => {
     const lowScoreKeys = (Object.values(result.references) as ProcessedReference[])
         .filter((ref: ProcessedReference) => {
              const score = ref.scores ? computeScore(ref.scores) : 0;
@@ -82,13 +74,16 @@ export const BibliographyDashboard: React.FC<BibliographyDashboardProps> = ({
         })
         .map((ref: ProcessedReference) => ref.id);
 
-    const cleanTex = latexParser.removeCitations(manuscriptText, lowScoreKeys);
+    return latexParser.removeCitations(manuscriptText, lowScoreKeys);
+  };
+
+  const handleDownloadTex = () => {
+    const cleanTex = getCleanTex();
     downloadTextFile('manuscript.tex', cleanTex, 'text/x-tex');
     setStatus('Downloaded cleaned .tex file (removed low-score citations).');
   };
 
   const handleDownloadBib = () => {
-    // Generate BibTeX only for the valid references (Score > 0 && Cited)
     const bibContent = serializeToBibTex(validReferences);
     downloadTextFile(bibFilename, bibContent, 'text/x-bibtex');
     setStatus('Downloaded filtered .bib file (Cited & Score > 0).');

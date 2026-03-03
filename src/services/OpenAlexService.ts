@@ -24,6 +24,7 @@ interface OpenAlexWork {
     display_name: string;
   };
   abstract_inverted_index?: Record<string, number[]>;
+  referenced_works?: string[];
 }
 
 export interface OpenAlexPaper extends Omit<OpenAlexWork, 'abstract_inverted_index'> {
@@ -155,7 +156,9 @@ export class OpenAlexService {
       abstract: paper.abstract || "No abstract available.",
       doi: paper.doi ? paper.doi.replace('https://doi.org/', '') : undefined,
       citationCount: paper.cited_by_count,
-      scores: scores
+      scores: scores,
+      openAlexId: paper.id,
+      referencedWorks: paper.referenced_works || []
     };
   }
 

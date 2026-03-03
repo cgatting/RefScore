@@ -181,7 +181,7 @@ const HowItWorks = ({ activeStep, setActiveStep }: { activeStep: number; setActi
     {
       title: "01 Ingest",
       icon: <FileText className="w-6 h-6" />,
-      desc: "Upload LaTeX (.tex) and Bibliography (.bib). Every citation is mapped to its specific source key."
+      desc: "Upload LaTeX (.tex) or text and Bibliography (.bib). Every citation is mapped to its specific source key."
     },
     {
       title: "02 Enrich",

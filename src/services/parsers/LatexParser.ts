@@ -38,6 +38,79 @@ export class LatexParser {
   }
 
   /**
+   * Attempts to extract only the main body of the document (from Introduction to Conclusion).
+   * Also strips out common non-main-body environments like abstract, appendices, and index.
+   */
+  private extractMainBody(content: string): string {
+    let cleaned = content;
+
+    // 1. Try to start from Introduction
+    const introRegex = /\\(section|chapter|subsection)\*?(?:\[[^\]]*\])?\{[^}]*intro[^}]*\}/i;
+    const introMatch = introRegex.exec(cleaned);
+    if (introMatch) {
+      cleaned = cleaned.substring(introMatch.index);
+    } else {
+      // Fallback: start from \begin{document}
+      const docStart = cleaned.indexOf('\\begin{document}');
+      if (docStart !== -1) {
+        cleaned = cleaned.substring(docStart);
+      }
+    }
+
+    // 2. Try to end after Conclusion (meaning before the next major section after Conclusion, or appendix)
+    const conclusionRegex = /\\(section|chapter|subsection)\*?(?:\[[^\]]*\])?\{[^}]*conclu[^}]*\}/i;
+    const conclusionMatch = conclusionRegex.exec(cleaned);
+    
+    let endCutoffIndex = cleaned.length;
+
+    if (conclusionMatch) {
+      const conclusionLevel = conclusionMatch[1].toLowerCase();
+      const afterConclusionIndex = conclusionMatch.index + conclusionMatch[0].length;
+      const restOfDoc = cleaned.substring(afterConclusionIndex);
+      
+      let nextLevelRegex: RegExp;
+      if (conclusionLevel === 'chapter') {
+        nextLevelRegex = /\\(?:chapter|appendix|begin\{thebibliography\}|bibliography\{|printbibliography|printindex)/i;
+      } else if (conclusionLevel === 'section') {
+        nextLevelRegex = /\\(?:section|chapter|appendix|begin\{thebibliography\}|bibliography\{|printbibliography|printindex)/i;
+      } else {
+        nextLevelRegex = /\\(?:subsection|section|chapter|appendix|begin\{thebibliography\}|bibliography\{|printbibliography|printindex)/i;
+      }
+      
+      const nextSectionMatch = nextLevelRegex.exec(restOfDoc);
+      
+      if (nextSectionMatch) {
+         endCutoffIndex = afterConclusionIndex + nextSectionMatch.index;
+      }
+    }
+
+    // 3. Independent of Conclusion, always cut off at Appendices, Bibliography, or Index
+    const hardEndMarkers = [
+      /\\appendix\b/i,
+      /\\begin\{appendices\}/i,
+      /\\begin\{thebibliography\}/i,
+      /\\bibliography\{/i,
+      /\\printbibliography\b/i,
+      /\\printindex\b/i,
+      /\\end\{document\}/i
+    ];
+
+    for (const marker of hardEndMarkers) {
+      const match = marker.exec(cleaned);
+      if (match && match.index < endCutoffIndex) {
+        endCutoffIndex = match.index;
+      }
+    }
+
+    cleaned = cleaned.substring(0, endCutoffIndex);
+
+    // 4. Strip out abstract if it happens to be inside the extracted portion
+    cleaned = cleaned.replace(/\\begin\{abstract\}[\s\S]*?\\end\{abstract\}/gi, '');
+
+    return cleaned;
+  }
+
+  /**
    * Removes content that should not be parsed (verbatim, comment environments, iffalse blocks)
    */
   private removeNonTextContent(content: string): string {
@@ -52,8 +125,10 @@ export class LatexParser {
    * Handles \cite{key}, \cite{key1, key2}, \parencite{key}, etc.
    */
   public extractCitations(content: string): string[] {
+    // Extract main body first
+    const mainBody = this.extractMainBody(content);
     // Clean content first to avoid extracting citations from ignored blocks
-    let cleanContent = this.removeNonTextContent(content);
+    let cleanContent = this.removeNonTextContent(mainBody);
     // Also remove comments for simple extraction
     cleanContent = cleanContent.replace(/%.*$/gm, '');
 
@@ -114,8 +189,11 @@ export class LatexParser {
         return err(new ParsingError('Content is empty'));
       }
 
-      // 0. Pre-clean non-text content (verbatim, iffalse, etc.)
-      const cleanContent = this.removeNonTextContent(content);
+      // 0. Extract main body
+      const mainBody = this.extractMainBody(content);
+
+      // 1. Pre-clean non-text content (verbatim, iffalse, etc.)
+      const cleanContent = this.removeNonTextContent(mainBody);
 
       // 1. Placeholder map to protect citations from sentence splitting
       const placeholders: string[] = [];

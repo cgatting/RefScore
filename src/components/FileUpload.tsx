@@ -8,15 +8,17 @@ interface FileUploadProps {
   value: string;
   onChange: (text: string) => void;
   accept: string;
+  onFileSelected?: (file: File) => void;
 }
 
-export const FileUpload: React.FC<FileUploadProps> = ({ 
-  label, 
-  subLabel, 
-  icon: Icon, 
-  value, 
+export const FileUpload: React.FC<FileUploadProps> = ({
+  label,
+  subLabel,
+  icon: Icon,
+  value,
   onChange,
-  accept 
+  accept,
+  onFileSelected
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -33,12 +35,26 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     }
   }, [value]);
 
+  const processFile = async (file: File) => {
+    setFileName(file.name);
+    if (onFileSelected) {
+      onFileSelected(file);
+    }
+    try {
+      const text = await file.text();
+      onChange(text);
+    } catch (error) {
+      console.error('Error processing file:', error);
+      // Handle error gracefully if needed, or fallback to text
+      const text = await file.text().catch(() => '');
+      onChange(text);
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setFileName(file.name);
-      const text = await file.text();
-      onChange(text);
+      await processFile(file);
     }
     // Reset input value to allow re-selecting the same file
     if (fileInputRef.current) {
@@ -67,9 +83,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     
     const file = e.dataTransfer.files?.[0];
     if (file && accept.includes(file.name.split('.').pop() || '')) {
-      setFileName(file.name);
-      const text = await file.text();
-      onChange(text);
+      await processFile(file);
     }
   };
 
