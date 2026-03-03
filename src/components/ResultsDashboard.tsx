@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { AnalysisResult, ProcessedReference } from '../types';
 import { ScoreRadar } from './RadarChart';
 import { ScatterPlot } from './ScatterPlot';
-import { CitationGraph } from './CitationGraph';
 import { Icons } from './Icons';
 import { ScoringConfig, ScoringEngine } from '../services/scoring/ScoringEngine';
 import { generatePDF } from '../utils/pdfGenerator';
@@ -191,21 +190,13 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onRe
         </div>
       </div>
 
-      {/* NEW: Scatter Plot & Citation Graph Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 pdf-section">
+      <div className="grid grid-cols-1 gap-8 pdf-section">
         <div className="animate-fade-in-up delay-100">
           <h3 className="text-xl font-display font-bold text-white mb-6 flex items-center gap-2">
             <Icons.Chart className="w-5 h-5 text-brand-400" />
             Performance Distribution
           </h3>
           <ScatterPlot references={references} />
-        </div>
-        <div className="animate-fade-in-up delay-150">
-          <h3 className="text-xl font-display font-bold text-white mb-6 flex items-center gap-2">
-            <Icons.Globe className="w-5 h-5 text-brand-400" />
-            Citation Knowledge Graph
-          </h3>
-          <CitationGraph references={result.references} />
         </div>
       </div>
 

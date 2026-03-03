@@ -1,5 +1,5 @@
-import React from 'react';
-import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, Cell } from 'recharts';
+import React, { useEffect, useRef, useState } from 'react';
+import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, Cell } from 'recharts';
 import { ProcessedReference } from '../types';
 
 interface ScatterPlotProps {
@@ -7,6 +7,31 @@ interface ScatterPlotProps {
 }
 
 export const ScatterPlot: React.FC<ScatterPlotProps> = ({ references }) => {
+  const chartAreaRef = useRef<HTMLDivElement>(null);
+  const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const element = chartAreaRef.current;
+    if (!element) {
+      return;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) {
+        return;
+      }
+      const { width, height } = entry.contentRect;
+      setChartSize({
+        width: Math.max(0, Math.floor(width)),
+        height: Math.max(0, Math.floor(height))
+      });
+    });
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
   const data = references
     .filter(ref => ref.year && ref.scores)
     .map(ref => ({
@@ -45,8 +70,9 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({ references }) => {
         </p>
       </div>
       
-      <ResponsiveContainer width="100%" height="85%" minWidth={100} minHeight={200}>
-        <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+      <div ref={chartAreaRef} className="h-[85%] w-full min-h-[200px]">
+        {chartSize.width > 0 && chartSize.height > 0 && (
+        <ScatterChart width={chartSize.width} height={chartSize.height} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
           <XAxis 
             type="number" 
             dataKey="year" 
@@ -108,7 +134,8 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({ references }) => {
             ))}
           </Scatter>
         </ScatterChart>
-      </ResponsiveContainer>
+        )}
+      </div>
     </div>
   );
 };

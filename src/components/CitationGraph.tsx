@@ -1,8 +1,8 @@
 import React, { useMemo, useEffect, useRef, useState, Suspense } from 'react';
+import { ProcessedReference } from '../types';
 
 // Dynamically import ForceGraph2D to avoid issues with SSR or strict module loading
 const ForceGraph2D = React.lazy(() => import('react-force-graph-2d'));
-import { ProcessedReference } from '../types';
 
 interface CitationGraphProps {
   references: Record<string, ProcessedReference>;
@@ -33,7 +33,7 @@ export const CitationGraph: React.FC<CitationGraphProps> = ({ references }) => {
     // Create a mapping from openAlexId to internal reference id
     const openAlexToRefId: Record<string, string> = {};
     
-    Object.values(references).forEach(ref => {
+    Object.values(references).forEach((ref: ProcessedReference) => {
       // Clean up the OpenAlex ID format just in case it is returning 'https://openalex.org/W...'
       const cleanId = ref.openAlexId ? ref.openAlexId.replace('https://openalex.org/', '') : '';
       
@@ -45,11 +45,13 @@ export const CitationGraph: React.FC<CitationGraphProps> = ({ references }) => {
       });
       if (cleanId) {
         openAlexToRefId[cleanId] = ref.id;
-        openAlexToRefId[ref.openAlexId!] = ref.id; // Store both just to be safe
+        if (ref.openAlexId) {
+            openAlexToRefId[ref.openAlexId] = ref.id; // Store both just to be safe
+        }
       }
     });
 
-    Object.values(references).forEach(ref => {
+    Object.values(references).forEach((ref: ProcessedReference) => {
       if (ref.referencedWorks && ref.referencedWorks.length > 0) {
         ref.referencedWorks.forEach(workUrl => {
           // OpenAlex returns full URLs in referenced_works, so let's match safely
