@@ -37,7 +37,7 @@ export const ScoreRadar: React.FC<ScoreRadarProps> = ({ data }) => {
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [containerRef.current]);
 
   const chartData = Object.entries(data).map(([key, value]) => ({
     subject: key,

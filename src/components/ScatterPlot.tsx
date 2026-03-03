@@ -30,7 +30,7 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({ references }) => {
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [chartAreaRef.current]);
 
   const data = references
     .filter(ref => ref.year && ref.scores)
@@ -72,68 +72,68 @@ export const ScatterPlot: React.FC<ScatterPlotProps> = ({ references }) => {
       
       <div ref={chartAreaRef} className="h-[85%] w-full min-h-[200px]">
         {chartSize.width > 0 && chartSize.height > 0 && (
-        <ScatterChart width={chartSize.width} height={chartSize.height} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-          <XAxis 
-            type="number" 
-            dataKey="year" 
-            name="Year" 
-            domain={['dataMin - 2', 'dataMax + 1']} 
-            tick={{ fill: 'var(--color-slate-400)' }}
-            tickLine={{ stroke: 'var(--color-slate-400)' }}
-            axisLine={{ stroke: 'var(--color-slate-600)' }}
-          />
-          <YAxis 
-            type="number" 
-            dataKey="authority" 
-            name="Citations" 
-            unit="" 
-            tick={{ fill: 'var(--color-slate-400)' }}
-            tickLine={{ stroke: 'var(--color-slate-400)' }}
-            axisLine={{ stroke: 'var(--color-slate-600)' }}
-            label={{ value: 'Citation Count', angle: -90, position: 'insideLeft', fill: 'var(--color-slate-400)', offset: 0 }}
-          />
-          <ZAxis 
-            type="number" 
-            dataKey="relevance" 
-            range={[60, 600]} 
-            name="Relevance" 
-            unit="%" 
-          />
-          <Tooltip 
-            cursor={{ strokeDasharray: '3 3', stroke: 'var(--color-slate-300)' }}
-            content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                const data = payload[0].payload;
-                return (
-                  <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-2xl backdrop-blur-sm bg-opacity-95">
-                    <p className="font-bold text-white mb-1 text-sm">{data.id}</p>
-                    <p className="text-xs text-slate-400 mb-3 max-w-[240px] leading-relaxed line-clamp-2">{data.title}</p>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Year:</span>
-                        <span className="text-slate-200 font-medium">{data.year}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Citations:</span>
-                        <span className="text-slate-200 font-medium">{data.authority}</span>
-                      </div>
-                      <div className="flex justify-between col-span-2 border-t border-slate-700 pt-2 mt-1">
-                        <span className="text-slate-500">Alignment Score:</span>
-                        <span className="text-brand-300 font-bold">{data.relevance.toFixed(1)}%</span>
+          <ScatterChart width={chartSize.width} height={chartSize.height} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+            <XAxis 
+              type="number" 
+              dataKey="year" 
+              name="Year" 
+              domain={['dataMin - 2', 'dataMax + 1']} 
+              tick={{ fill: 'var(--color-slate-400)' }}
+              tickLine={{ stroke: 'var(--color-slate-400)' }}
+              axisLine={{ stroke: 'var(--color-slate-600)' }}
+            />
+            <YAxis 
+              type="number" 
+              dataKey="authority" 
+              name="Citations" 
+              unit="" 
+              tick={{ fill: 'var(--color-slate-400)' }}
+              tickLine={{ stroke: 'var(--color-slate-400)' }}
+              axisLine={{ stroke: 'var(--color-slate-600)' }}
+              label={{ value: 'Citation Count', angle: -90, position: 'insideLeft', fill: 'var(--color-slate-400)', offset: 0 }}
+            />
+            <ZAxis 
+              type="number" 
+              dataKey="relevance" 
+              range={[60, 600]} 
+              name="Relevance" 
+              unit="%" 
+            />
+            <Tooltip 
+              cursor={{ strokeDasharray: '3 3', stroke: 'var(--color-slate-300)' }}
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const data = payload[0].payload;
+                  return (
+                    <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-2xl backdrop-blur-sm bg-opacity-95">
+                      <p className="font-bold text-white mb-1 text-sm">{data.id}</p>
+                      <p className="text-xs text-slate-400 mb-3 max-w-[240px] leading-relaxed line-clamp-2">{data.title}</p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Year:</span>
+                          <span className="text-slate-200 font-medium">{data.year}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Citations:</span>
+                          <span className="text-slate-200 font-medium">{data.authority}</span>
+                        </div>
+                        <div className="flex justify-between col-span-2 border-t border-slate-700 pt-2 mt-1">
+                          <span className="text-slate-500">Alignment Score:</span>
+                          <span className="text-brand-300 font-bold">{data.relevance.toFixed(1)}%</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              }
-              return null;
-            }}
-          />
-          <Scatter name="References" data={data}>
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={getColor(entry)} />
-            ))}
-          </Scatter>
-        </ScatterChart>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Scatter name="References" data={data}>
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={getColor(entry)} />
+              ))}
+            </Scatter>
+          </ScatterChart>
         )}
       </div>
     </div>
