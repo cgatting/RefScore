@@ -36,4 +36,36 @@ describe('CitationFinderService.autoAddForGap', () => {
     const matches = updated.manuscript.match(/\\cite\{Smith2020Trust\}/g) || [];
     expect(matches.length).toBe(1);
   });
+
+  it('does not add a new citation when sentence already has APA citation', () => {
+    const manuscript = 'The effect is well established (Smith, 2020).';
+    const bib = '';
+    const ref: any = {
+      id: 'Jones2021',
+      title: 'New',
+      authors: ['Jones'],
+      year: 2021,
+      venue: 'J',
+      abstract: '...'
+    };
+    const updated = service.autoAddForGap('The effect is well established (Smith, 2020).', undefined, ref, manuscript, bib);
+    expect(updated.manuscript).toBe(manuscript);
+    expect(updated.bib).toBe(bib);
+  });
+
+  it('does not add a new citation when sentence already has IEEE citation', () => {
+    const manuscript = 'The benchmark results are already reported in the literature [12].';
+    const bib = '';
+    const ref: any = {
+      id: 'Lee2022',
+      title: 'New',
+      authors: ['Lee'],
+      year: 2022,
+      venue: 'J',
+      abstract: '...'
+    };
+    const updated = service.autoAddForGap('The benchmark results are already reported in the literature [12].', undefined, ref, manuscript, bib);
+    expect(updated.manuscript).toBe(manuscript);
+    expect(updated.bib).toBe(bib);
+  });
 });

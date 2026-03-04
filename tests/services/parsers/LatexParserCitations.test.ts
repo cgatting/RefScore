@@ -69,4 +69,45 @@ describe('LatexParser Citations', () => {
     expect(result).not.toContain('r2');
     expect(result).toContain('\\textcite{k2}');
   });
+
+  it('marks IEEE-style bracket citations as already cited', () => {
+    const parsed = parser.parse('This method is robust and validated in prior work [1, 3-5].');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value[0].alreadyCited).toBe(true);
+    expect(parsed.value[0].detectedCitationFormats).toContain('IEEE');
+  });
+
+  it('marks APA parenthetical citations as already cited', () => {
+    const parsed = parser.parse('This aligns with prior studies (Smith, 2022; Doe, 2021).');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value[0].alreadyCited).toBe(true);
+    expect(parsed.value[0].detectedCitationFormats).toContain('APA');
+  });
+
+  it('marks MLA parenthetical citations as already cited', () => {
+    const parsed = parser.parse('The claim is supported by textual evidence (Johnson 45-47).');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value[0].alreadyCited).toBe(true);
+    expect(parsed.value[0].detectedCitationFormats).toContain('MLA');
+  });
+
+  it('marks Chicago superscript citations as already cited', () => {
+    const parsed = parser.parse('This interpretation was later challenged in archival work¹.');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value[0].alreadyCited).toBe(true);
+    expect(parsed.value[0].detectedCitationFormats).toContain('Chicago');
+  });
+
+  it('marks LaTeX citation commands as already cited', () => {
+    const parsed = parser.parse('This is discussed by \\cite{smith2020} in depth.');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value[0].alreadyCited).toBe(true);
+    expect(parsed.value[0].detectedCitationFormats).toContain('LaTeX');
+    expect(parsed.value[0].citations).toContain('smith2020');
+  });
 });

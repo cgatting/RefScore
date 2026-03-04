@@ -319,6 +319,20 @@ export class AnalysisService {
       finalIncluded
     };
 
+    const citedSentenceDatabase = analyzedSentences.reduce((acc, sentence) => {
+      const key = LatexParser.normalizeSentenceForCitationDatabase(sentence.text);
+      if (!key) return acc;
+      const existing = acc[key];
+      const mergedFormats = Array.from(new Set([...(existing?.citationFormats || []), ...(sentence.detectedCitationFormats || [])]));
+      const mergedKeys = Array.from(new Set([...(existing?.citationKeys || []), ...(sentence.citations || [])]));
+      acc[key] = {
+        alreadyCited: !!sentence.alreadyCited || !!existing?.alreadyCited,
+        citationFormats: mergedFormats,
+        citationKeys: mergedKeys
+      };
+      return acc;
+    }, {} as Record<string, { alreadyCited: boolean; citationFormats: string[]; citationKeys: string[] }>);
+
     return {
       overallScore: finalScore,
       analyzedSentences,
@@ -327,13 +341,13 @@ export class AnalysisService {
       documentTitle,
       dimensionScores: avgDimensions,
       gaps,
-      prismaData
+      prismaData,
+      citedSentenceDatabase
     };
   }
 
   private detectMissingCitation(sentence: AnalyzedSentence): string | null {
-    // 1. If it already has citations, it's not missing one.
-    if (sentence.citations && sentence.citations.length > 0) return null;
+    if (sentence.alreadyCited || (sentence.citations && sentence.citations.length > 0)) return null;
 
     // 2. Ignore short sentences or titles (heuristic)
     if (sentence.text.length < 50) return null;
@@ -363,8 +377,7 @@ export class AnalysisService {
   }
 
   private detectGap(sentence: AnalyzedSentence): string | null {
-    // Only mark as gap if the sentence lacks a citation AND has a gap marker
-    if (sentence.citations && sentence.citations.length > 0) return null;
+    if (sentence.alreadyCited || (sentence.citations && sentence.citations.length > 0)) return null;
 
     const gapMarkers = [
       "remains unknown", "unclear whether", "limited research exists", 

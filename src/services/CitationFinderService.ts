@@ -4,6 +4,7 @@ import { OpenAlexService } from './OpenAlexService';
 import { TfIdfVectorizer } from './nlp/TfIdfVectorizer';
 import { EntityExtractor } from './nlp/EntityExtractor';
 import { ScoringEngine, computeWeightedTotal } from './scoring/ScoringEngine';
+import { LatexParser } from './parsers/LatexParser';
 
 export class CitationFinderService {
   private oaService = new OpenAlexService();
@@ -13,6 +14,17 @@ export class CitationFinderService {
 
   constructor(config?: any) {
     this.scoringEngine = new ScoringEngine(config);
+  }
+
+  private buildCitedSentenceDatabase(manuscriptContent: string): Record<string, boolean> {
+    const parsed = new LatexParser().parse(manuscriptContent);
+    if (!parsed.ok) return {};
+    return parsed.value.reduce((acc, sentence) => {
+      const key = LatexParser.normalizeSentenceForCitationDatabase(sentence.text);
+      if (!key) return acc;
+      acc[key] = !!sentence.alreadyCited || (sentence.citations?.length || 0) > 0;
+      return acc;
+    }, {} as Record<string, boolean>);
   }
 
   /**
@@ -224,6 +236,11 @@ export class CitationFinderService {
   ): { manuscript: string; bib: string } {
     let updated = manuscriptContent;
     const key = newRef.id;
+    const sentenceKey = LatexParser.normalizeSentenceForCitationDatabase(sentenceText);
+    const citedSentenceDatabase = this.buildCitedSentenceDatabase(manuscriptContent);
+    if (sentenceKey && citedSentenceDatabase[sentenceKey]) {
+      return { manuscript: manuscriptContent, bib: bibContent };
+    }
     const citePattern = new RegExp(`\\\\(?:cite|parencite|textcite|footcite)[^\\{]*\\{[^}]*\\b${key}\\b[^}]*\\}`);
     if (!citePattern.test(updated)) {
       const insertCite = (text: string, idx: number) => {

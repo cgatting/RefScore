@@ -30,6 +30,8 @@ export interface AnalyzedSentence {
   hasNumbers: boolean; // Does the sentence contain numerical claims?
   embedding?: number[];
   scores?: Record<string, DimensionScores>; // Map citation key to scores
+  alreadyCited?: boolean;
+  detectedCitationFormats?: string[];
   
   // Advanced Analysis Fields
   isMissingCitation?: boolean;
@@ -58,6 +60,7 @@ export interface AnalysisResult {
   dimensionScores: DimensionScores;
   gaps: string[];
   prismaData?: PrismaFlowData;
+  citedSentenceDatabase?: Record<string, { alreadyCited: boolean; citationFormats: string[]; citationKeys: string[] }>;
 }
 
 export enum AppState {

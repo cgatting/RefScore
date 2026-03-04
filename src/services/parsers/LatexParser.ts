@@ -4,6 +4,12 @@ import { ParsingError } from '../../utils/AppError';
 
 export class LatexParser {
   private static CITE_EXTRACT_REGEX = /(\\(?:cite|parencite|textcite|footcite)[a-zA-Z]*\*?(?:\[[^\]]*\])*\{([^}]+)\})/g;
+  private static IEEE_BRACKET_REGEX = /\[(?:\s*\d+\s*(?:[-–]\s*\d+)?\s*)(?:,\s*\d+\s*(?:[-–]\s*\d+)?\s*)*\]/;
+  private static NUMBERED_PAREN_REGEX = /\((?:\s*\d+\s*(?:[-–]\s*\d+)?\s*)(?:,\s*\d+\s*(?:[-–]\s*\d+)?\s*)*\)/;
+  private static APA_PARENTHESES_REGEX = /\((?:[A-Z][A-Za-z'’`\-]+(?:\s+(?:et al\.?|&|and)\s+[A-Z][A-Za-z'’`\-]+)?(?:,\s*)?(?:19|20)\d{2}[a-z]?(?:;\s*[A-Z][A-Za-z'’`\-]+(?:,\s*)?(?:19|20)\d{2}[a-z]?)*)(?:,\s*p{1,2}\.?\s*\d+(?:-\d+)?)?\)/;
+  private static NARRATIVE_AUTHOR_YEAR_REGEX = /\b[A-Z][A-Za-z'’`\-]+(?:\s+et al\.)?\s*\((?:19|20)\d{2}[a-z]?\)/;
+  private static MLA_PARENTHESES_REGEX = /\([A-Z][A-Za-z'’`\-]+(?:\s+and\s+[A-Z][A-Za-z'’`\-]+)?\s+\d{1,4}(?:[-–]\d{1,4})?\)/;
+  private static SUPERSCRIPT_FOOTNOTE_REGEX = /[⁰¹²³⁴⁵⁶⁷⁸⁹]+/;
 
   public extractTitle(content: string): string | undefined {
     const titleStart = content.indexOf('\\title{');
@@ -179,6 +185,37 @@ export class LatexParser {
     });
   }
 
+  public static normalizeSentenceForCitationDatabase(sentence: string): string {
+    return sentence
+      .replace(/\\(?:cite|parencite|textcite|footcite|citep|citet)[a-zA-Z]*\*?(?:\[[^\]]*\])*\{[^}]+\}/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  public static detectCitationFormats(sentence: string): string[] {
+    const formats: string[] = [];
+    if (/(\\(?:cite|parencite|textcite|footcite|citep|citet)[a-zA-Z]*\*?(?:\[[^\]]*\])*\{[^}]+\})/.test(sentence)) {
+      formats.push('LaTeX');
+    }
+    if (LatexParser.IEEE_BRACKET_REGEX.test(sentence)) {
+      formats.push('IEEE');
+    }
+    if (LatexParser.NUMBERED_PAREN_REGEX.test(sentence)) {
+      formats.push('Numbered');
+    }
+    if (LatexParser.APA_PARENTHESES_REGEX.test(sentence) || LatexParser.NARRATIVE_AUTHOR_YEAR_REGEX.test(sentence)) {
+      formats.push('APA');
+    }
+    if (LatexParser.MLA_PARENTHESES_REGEX.test(sentence)) {
+      formats.push('MLA');
+    }
+    if (LatexParser.SUPERSCRIPT_FOOTNOTE_REGEX.test(sentence) || /<sup>\d+<\/sup>/.test(sentence)) {
+      formats.push('Chicago');
+    }
+    return Array.from(new Set(formats));
+  }
+
   /**
    * Parses LaTeX manuscript content into analyzed sentences.
    * @param content Raw LaTeX string
@@ -252,12 +289,15 @@ export class LatexParser {
       return original;
     });
 
-    // Rough check for numbers (digits or percentage signs)
     const hasNumbers = /\d+%?|\d+\.\d+/.test(restoredSentence);
+    const detectedCitationFormats = LatexParser.detectCitationFormats(restoredSentence);
+    const alreadyCited = citations.length > 0 || detectedCitationFormats.length > 0;
 
     return {
       text: restoredSentence,
       citations,
+      alreadyCited,
+      detectedCitationFormats,
       entities: [], // Will be filled by EntityExtractor later
       hasNumbers
     };
