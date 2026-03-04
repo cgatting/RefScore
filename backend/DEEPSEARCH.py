@@ -350,11 +350,8 @@ class SourceRankingEngine:
             text = " ".join([s for s in [item.get('title', [''])[0], item.get('abstract', '')] if s])
             if not text:
                 return ""
-            return self.nlp.generate_summary(
-                text,
-                max_length=min(48, self.settings['model_settings']['max_length']),
-                min_length=min(12, self.settings['model_settings']['min_length'])
-            )
+            clean_text = text.replace("<jats:p>", "").replace("</jats:p>", "").strip()
+            return clean_text[:300] + ("..." if len(clean_text) > 300 else "")
         except Exception:
             return (item.get('title', [''])[0] or '')[:120]
 
@@ -2320,7 +2317,7 @@ DEFAULT_SETTINGS = {
         'top': 10
     },
     'search_settings': {
-        'max_results': 20,
+        'max_results': 10,
         'rate_limit': 1.0,
         'enable_snowballing': False,
         'snowballing_depth': 1
