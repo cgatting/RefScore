@@ -25,6 +25,7 @@ function App() {
   const [manuscriptText, setManuscriptText] = useState('');
   const [bibliographyText, setBibliographyText] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [reportGenerationTimeMs, setReportGenerationTimeMs] = useState<number | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [deepSearchProgress, setDeepSearchProgress] = useState(0);
@@ -77,6 +78,7 @@ function App() {
 
   const handleAnalysis = async (configOverride?: ScoringConfig) => {
     const deepSearchFlag = !!autoGenerateBib;
+    const startedAt = Date.now();
 
     if (!manuscriptText.trim() || (!autoGenerateBib && !bibliographyText.trim())) {
       setErrorMsg(autoGenerateBib ? "Please provide manuscript content." : "Please provide both manuscript content and a bibliography, or enable Generate References.");
@@ -117,6 +119,7 @@ function App() {
               const service = new AnalysisService(scoringConfig);
               const analysisResult = await service.analyze(nextManuscript, nextBibliography);
               
+              setReportGenerationTimeMs(Date.now() - startedAt);
               setResult(analysisResult);
               setAppState(AppState.RESULTS);
               setActiveTab('dashboard');
@@ -137,6 +140,7 @@ function App() {
   const handleReset = () => {
     setAppState(AppState.IDLE);
     setResult(null);
+    setReportGenerationTimeMs(null);
     setErrorMsg(null);
     setManuscriptText('');
     setBibliographyText('');
@@ -410,7 +414,7 @@ function App() {
         {appState === AppState.RESULTS && result && (
            <div className="animate-fade-in w-full">
              {activeTab === 'dashboard' ? (
-                <ResultsDashboard result={result} onReset={handleReset} scoringConfig={scoringConfig} />
+                <ResultsDashboard result={result} onReset={handleReset} scoringConfig={scoringConfig} reportGenerationTimeMs={reportGenerationTimeMs} />
              ) : activeTab === 'document' ? (
                 <DocumentViewer 
                     result={result} 

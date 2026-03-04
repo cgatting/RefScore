@@ -10,9 +10,10 @@ interface ResultsDashboardProps {
   result: AnalysisResult;
   onReset: () => void;
   scoringConfig: ScoringConfig;
+  reportGenerationTimeMs?: number | null;
 }
 
-export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onReset, scoringConfig }) => {
+export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onReset, scoringConfig, reportGenerationTimeMs }) => {
   const [filter, setFilter] = useState('');
   const [sortField, setSortField] = useState<'id' | 'title' | 'year' | 'score'>('id');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -93,6 +94,12 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onRe
     authority: "Indicators of the venue's or author's impact and reputation."
   };
 
+  const formattedGenerationTime = typeof reportGenerationTimeMs === 'number'
+    ? reportGenerationTimeMs < 1000
+      ? `${reportGenerationTimeMs} ms`
+      : `${(reportGenerationTimeMs / 1000).toFixed(2)}s`
+    : null;
+
   return (
     <div id="dashboard-content" className="space-y-8 pb-12 animate-fade-in bg-slate-950 p-8">
       {/* Header Section */}
@@ -105,6 +112,12 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, onRe
             <Icons.Calendar className="w-4 h-4 text-brand-400" />
             Generated on {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
+          {formattedGenerationTime && (
+            <p className="text-slate-500 mt-1 flex items-center gap-2 text-sm font-medium">
+              <Icons.Clock className="w-4 h-4 text-slate-500" />
+              Report generated in {formattedGenerationTime}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto" data-html2canvas-ignore>
           <button 
