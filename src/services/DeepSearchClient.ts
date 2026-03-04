@@ -10,6 +10,8 @@ export class DeepSearchClient {
   private baseUrl: string;
   private wsUrl: string;
   private wsDisabled: boolean = false;
+  private wsRetryAt: number = 0;
+  private readonly wsRecoveryMs: number = 30000;
 
   private buildBody(manuscriptText: string, options?: { maxResults?: number, noCache?: boolean }) {
     const body: Record<string, any> = { manuscriptText };
@@ -46,10 +48,29 @@ export class DeepSearchClient {
     }
   }
 
+  public resetWebSocketState() {
+    this.wsDisabled = false;
+    this.wsRetryAt = 0;
+  }
+
+  private disableWebSocketTemporarily() {
+    this.wsDisabled = true;
+    this.wsRetryAt = Date.now() + this.wsRecoveryMs;
+  }
+
+  private canUseWebSocket(): boolean {
+    if (!this.wsDisabled) return true;
+    if (Date.now() >= this.wsRetryAt) {
+      this.resetWebSocketState();
+      return true;
+    }
+    return false;
+  }
+
   public async refineDocument(manuscriptText: string, onProgress?: ProgressCallback, options?: { maxResults?: number, noCache?: boolean }): Promise<DeepSearchRefineResponse> {
     let socket: WebSocket | null = null;
 
-    if (onProgress && !this.wsDisabled) {
+    if (onProgress && this.canUseWebSocket()) {
       try {
         socket = new WebSocket(this.wsUrl);
         socket.onmessage = (event) => {
@@ -77,19 +98,19 @@ export class DeepSearchClient {
           };
           socket.onopen = () => done();
           socket.onerror = () => {
-            this.wsDisabled = true;
+            this.disableWebSocketTemporarily();
             done();
           };
           socket.onclose = () => {
             if (socket && socket.readyState !== WebSocket.OPEN) {
-              this.wsDisabled = true;
+              this.disableWebSocketTemporarily();
             }
             done();
           };
           setTimeout(done, 1200);
         });
       } catch (e) {
-        this.wsDisabled = true;
+        this.disableWebSocketTemporarily();
       }
     }
 
