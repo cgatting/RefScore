@@ -9,6 +9,7 @@ export type ProgressCallback = (percent: number, message: string) => void;
 export class DeepSearchClient {
   private baseUrl: string;
   private wsUrl: string;
+  private wsDisabled: boolean = false;
 
   private buildBody(manuscriptText: string, options?: { maxResults?: number, noCache?: boolean }) {
     const body: Record<string, any> = { manuscriptText };
@@ -48,7 +49,7 @@ export class DeepSearchClient {
   public async refineDocument(manuscriptText: string, onProgress?: ProgressCallback, options?: { maxResults?: number, noCache?: boolean }): Promise<DeepSearchRefineResponse> {
     let socket: WebSocket | null = null;
 
-    if (onProgress) {
+    if (onProgress && !this.wsDisabled) {
       try {
         socket = new WebSocket(this.wsUrl);
         socket.onmessage = (event) => {
@@ -68,12 +69,27 @@ export class DeepSearchClient {
         await new Promise<void>((resolve) => {
           if (!socket) return resolve();
           if (socket.readyState === WebSocket.OPEN) return resolve();
-          socket.onopen = () => resolve();
-          // Timeout after 2s if WS fails, proceed anyway
-          setTimeout(resolve, 2000); 
+          let resolved = false;
+          const done = () => {
+            if (resolved) return;
+            resolved = true;
+            resolve();
+          };
+          socket.onopen = () => done();
+          socket.onerror = () => {
+            this.wsDisabled = true;
+            done();
+          };
+          socket.onclose = () => {
+            if (socket && socket.readyState !== WebSocket.OPEN) {
+              this.wsDisabled = true;
+            }
+            done();
+          };
+          setTimeout(done, 1200);
         });
       } catch (e) {
-        console.warn("WebSocket connection failed, proceeding without progress updates", e);
+        this.wsDisabled = true;
       }
     }
 

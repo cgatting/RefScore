@@ -43,6 +43,10 @@ interface OpenAlexListResponse {
 
 export class OpenAlexService {
   private static BASE_URL = 'https://api.openalex.org';
+  private static STOP_TOKENS = new Set([
+    'back', 'matter', 'bibliography', 'index', 'anaphoras', 'manuscripts', 'biblical',
+    'citations', 'ancient', 'authors', 'writings', 'places', 'regions', 'general'
+  ]);
   public static normalizeDoi(doi: string): string {
     return doi
       .replace(/^doi:/i, '')
@@ -58,6 +62,10 @@ export class OpenAlexService {
    */
   public async searchPapers(query: string, limit: number = 3, progress?: (msg: string) => void): Promise<ProcessedReference[]> {
     try {
+      const primaryQuery = this.normalizeQuery(query);
+      if (!primaryQuery) {
+        return [];
+      }
       const collected: OpenAlexWork[] = [];
       const perPage = Math.min(200, Math.max(1, limit));
       let page = 1;
@@ -65,8 +73,15 @@ export class OpenAlexService {
         const remaining = limit - collected.length;
         const per = Math.min(perPage, remaining);
         progress?.(`OpenAlex: fetching page ${page} (${per} per page)`);
-        const url = `${OpenAlexService.BASE_URL}/works?search=${encodeURIComponent(query)}&per_page=${per}&page=${page}`;
-        const response = await fetch(url);
+        const url = `${OpenAlexService.BASE_URL}/works?search=${encodeURIComponent(primaryQuery)}&per_page=${per}&page=${page}`;
+        let response = await fetch(url);
+        if (!response.ok && response.status >= 500) {
+          const fallbackQuery = this.fallbackQuery(primaryQuery);
+          if (fallbackQuery && fallbackQuery !== primaryQuery) {
+            const fallbackUrl = `${OpenAlexService.BASE_URL}/works?search=${encodeURIComponent(fallbackQuery)}&per_page=${per}&page=${page}`;
+            response = await fetch(fallbackUrl);
+          }
+        }
         if (!response.ok) break;
         const data: OpenAlexListResponse = await response.json();
         if (!data.results || data.results.length === 0) break;
@@ -84,6 +99,27 @@ export class OpenAlexService {
       console.error("OpenAlex Search Failed:", error);
       return [];
     }
+  }
+
+  private normalizeQuery(query: string): string {
+    const tokens = (query || '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/[{}[\]()"“”'`]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .split(/\W+/)
+      .map(t => t.toLowerCase())
+      .filter(t => t.length >= 3 && !/^\d+$/.test(t));
+    if (tokens.length === 0) return '';
+    const lowSignal = tokens.filter(t => OpenAlexService.STOP_TOKENS.has(t)).length;
+    if (tokens.length >= 6 && lowSignal / tokens.length >= 0.6) {
+      return '';
+    }
+    return tokens.slice(0, 12).join(' ').slice(0, 140);
+  }
+
+  private fallbackQuery(query: string): string {
+    return query.split(/\s+/).slice(0, 6).join(' ');
   }
 
   /**
