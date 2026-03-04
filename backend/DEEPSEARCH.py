@@ -57,7 +57,7 @@ def _lazy_load_ml_deps():
     
     nltk = _nltk
     torch = _torch
-    torch.set_num_threads(1)
+    torch.set_num_threads(2)
     yake = _yake
     SentenceTransformer = _SentenceTransformer
     pipeline = _pipeline
