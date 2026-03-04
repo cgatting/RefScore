@@ -57,6 +57,7 @@ def _lazy_load_ml_deps():
     
     nltk = _nltk
     torch = _torch
+    torch.set_num_threads(1)
     yake = _yake
     SentenceTransformer = _SentenceTransformer
     pipeline = _pipeline
@@ -627,7 +628,7 @@ class DocumentRefiner:
         processed_sentences = [None] * total  # Pre-allocate list
         
         # Limit concurrency to avoid overwhelming the system
-        sem = asyncio.Semaphore(10)
+        sem = asyncio.Semaphore(1)
         completed_count = 0
         
         async def process_with_sem(sent, idx):
