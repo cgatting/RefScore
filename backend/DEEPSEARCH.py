@@ -1681,7 +1681,7 @@ class DeepResearchToolApp:
         ctk.CTkLabel(perf_content, text="Sentence Model").pack(anchor="w", padx=5)
         sen_entry = ctk.CTkEntry(perf_content)
         sen_entry.pack(fill="x", padx=5, pady=2)
-        sen_entry.insert(0, self.settings['model_settings'].get('sentence_model', 'all-MiniLM-L6-v2'))
+        sen_entry.insert(0, self.settings['model_settings'].get('sentence_model', 'sentence-transformers/all-mpnet-base-v2'))
         sen_entry.bind("<FocusOut>", lambda e: self._update_setting(['model_settings','sentence_model'], sen_entry.get()))
 
         self._create_slider_with_entry(perf_content, "Max Summary Length", ['model_settings','max_length'], 2, 200, 198, int)
@@ -2329,8 +2329,8 @@ DEFAULT_SETTINGS = {
         'weight_recency': 0.1
     },
     'model_settings': {
-        'sentence_model': 'all-MiniLM-L6-v2',
-        'summarizer_model': 'sshleifer/distilbart-cnn-12-6',
+        'sentence_model': 'sentence-transformers/all-mpnet-base-v2',
+        'summarizer_model': 'facebook/bart-large-cnn',
         'max_length': 20,
         'min_length': 2
     },
